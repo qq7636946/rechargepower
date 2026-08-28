@@ -1,0 +1,2645 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ffffff">
+    <title>TOE 台普威能源 — Our Business 電能解決方案總覽</title>
+    <!--
+        Our Business 電能解決方案總覽（等角白模島）
+        ── 版式參照：白底等角工廠島＋橘色細節＋藍色六角「+」熱點、
+           上方 Our Business 標題、左右場站切換、橘色標籤引線 ──
+        ── 元件全數取自 3d-eco-city.html：
+           solarFarm（太陽能場）、cContainer（電池貨櫃）、cCab（PCS 櫃）、
+           cTrafo（油浸變壓器）、cSkidFrame（開放框架櫃）、essCampus（儲能場站）、
+           substation（變電站）、pylon（輸電鐵塔）、packUnit（戶外儲能小櫃）──
+        ── 白模色階同 3d-eco-city，唯 edge 桶改橘色：
+           鎖桿、飾帶、電纜溝、引接線等細節自然變成參考圖的橘色管線記號 ──
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700&family=Manrope:wght@700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+    </script>
+    <style>
+        :root {
+            --blue: #44a59a;
+            --orange: #f7941d;
+            --ink: #2a2f38;
+            --sub: #8a919c;
+            --sans: "DM Sans", "Noto Sans TC", Arial, sans-serif;
+            --display: "Manrope", "Noto Sans TC", Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0; overflow: hidden;
+            background: #fff; color: var(--ink);
+            font-family: var(--sans); -webkit-font-smoothing: antialiased;
+        }
+
+        #stage { position: fixed; inset: 0; display: block; }
+
+        /* 上方標題（參考版式） */
+        .masthead {
+            position: fixed; z-index: 10; top: 4.5vh; left: 50%;
+            transform: translateX(-50%); text-align: center; pointer-events: none;
+            width: min(92vw, 900px);
+        }
+        @keyframes riseIn {
+            from { opacity: 0; transform: translate(-50%, -16px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        .masthead { animation: riseIn .9s .15s cubic-bezier(.2, .7, .2, 1) both; }
+        .masthead h1 {
+            margin: 0; color: var(--blue); font-family: var(--display);
+            font-size: clamp(30px, 3.6vw, 46px); font-weight: 800; letter-spacing: .01em;
+        }
+        .masthead h1::after {
+            content: ''; display: block; width: 34px; height: 3px;
+            margin: 14px auto 0; border-radius: 2px;
+            background: linear-gradient(90deg, var(--blue), var(--orange));
+        }
+        .masthead p {
+            margin: 12px 0 0; color: #6d7480; font-size: clamp(12px, 1.15vw, 15px);
+            font-weight: 500; letter-spacing: .06em; line-height: 1.8;
+        }
+
+        /* 左右場站切換 */
+        .zone-nav {
+            position: fixed; z-index: 10; top: 50%; transform: translateY(-50%);
+            display: flex; gap: 6px; align-items: center; cursor: pointer;
+            padding: 11px 16px; background: #fff; border: 1px solid #e4e7ec;
+            border-radius: 999px; box-shadow: 0 6px 22px rgba(35, 44, 76, .1);
+            color: var(--ink); font-size: 13px; font-weight: 700; letter-spacing: .04em;
+            user-select: none; transition: box-shadow .25s ease, transform .25s ease;
+        }
+        .zone-nav:hover { box-shadow: 0 10px 28px rgba(35, 44, 76, .16); transform: translateY(-50%) scale(1.04); }
+        .zone-nav svg { display: block; }
+        .zone-nav.prev { left: 26px; }
+        .zone-nav.next { right: 26px; }
+
+        /* 橘色場區標籤＋虛線引線 */
+        .zone-tag {
+            position: fixed; z-index: 9; pointer-events: none; opacity: 0;
+            transform: translate(-50%, -100%); transition: opacity .3s ease;
+            text-align: center;
+        }
+        .zone-tag b {
+            display: inline-block; padding: 2px 4px 6px;
+            color: var(--orange); font-size: clamp(15px, 1.6vw, 21px);
+            font-weight: 700; letter-spacing: .1em;
+            border-bottom: 2px solid var(--orange);
+        }
+        .zone-tag i {
+            display: block; width: 1.5px; height: 44px; margin: 0 auto;
+            background: repeating-linear-gradient(180deg, var(--orange) 0 5px, transparent 5px 9px);
+        }
+        .zone-tag u {
+            display: block; width: 7px; height: 7px; margin: -2px auto 0;
+            background: var(--orange); border-radius: 50%;
+        }
+        .zone-tag.on { opacity: 1; }
+
+        /* 圓形熱點（原藍色六角；改圓形呼應主站的同心圓／儀表語彙）。
+           ⚠ .spot 本身的 transform 每幀被 updateOverlays 的 inline translate 覆蓋，
+           所以任何縮放都做在 ::after／::before 上，寫在 .spot 上是死的。 */
+        #spots { position: fixed; inset: 0; z-index: 8; pointer-events: none; overflow: hidden; }
+        .spot {
+            position: absolute; width: 36px; height: 36px; margin: -18px 0 0 -18px;
+            display: grid; place-items: center; pointer-events: auto; cursor: pointer;
+            isolation: isolate;
+            color: #fff; font-size: 18px; font-weight: 700; line-height: 1;
+            transition: color .18s ease;
+        }
+        .spot svg {
+            width: 15px;
+            height: 15px;
+            display: block;
+            /* 吃 currentColor：巡覽模式用 .spot 的 color 過渡讓標記淡出淡入，
+               寫死顏色的話那組規則就失效了。 */
+            fill: currentColor;
+            /* 點擊要落在 .spot 上，不要被 svg 攔走 */
+            pointer-events: none;
+        }
+
+        .spot::after {
+            content: ''; position: absolute; inset: 0; z-index: -1;
+            background: var(--blue);
+            border-radius: 50%;
+            /* 白色細環收邊：同主站儀表的髮絲圈（border 是實線，不是陰影） */
+            border: 2px solid rgba(255, 255, 255, .5);
+            box-sizing: border-box;
+            transition: background .22s ease, transform .38s cubic-bezier(.22, .9, .3, 1.15);
+        }
+        .spot::before {
+            content: ''; position: absolute; inset: -9px; z-index: -2;
+            background: rgba(68, 165, 154, .3);
+            border-radius: 50%;
+            animation: spotPulse 2.6s ease-out infinite;
+            animation-delay: var(--pd, 0s);
+        }
+        @keyframes spotPulse {
+            0% { transform: scale(.5); opacity: 0; }
+            35% { opacity: 1; }
+            100% { transform: scale(1.14); opacity: 0; }
+        }
+        .spot:hover::after { background: #5cb4a6; transform: scale(1.12); }
+        .spot.is-active::after { background: var(--orange); }
+        .spot.is-active::before { background: rgba(247, 148, 29, .3); }
+
+        /* 卷軸巡覽模式：只顯示當站那一顆錨點。
+           鏡頭移動中不再整顆消失，改成「縮成小圓點」：圓底縮到 .22、
+           ＋字轉透明、脈衝停掉 —— 像一顆跟著場站走的定位點；
+           到站停穩才彈回完整錨點（彈性曲線）、脈衝恢復。
+           其他站的錨點照舊完全隱藏，畫面上永遠只有一顆。 */
+        body.scrub-mode .spot {
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .32s ease, visibility .32s, color .18s ease;
+        }
+        body.scrub-mode .spot.is-zone {
+            opacity: .92; visibility: visible;
+            color: transparent;
+        }
+        body.scrub-mode .spot.is-zone::after { transform: scale(.22); }
+        body.scrub-mode .spot.is-zone::before { animation: none; opacity: 0; }
+
+        body.scrub-mode.at-stop .spot.is-zone {
+            opacity: 1; pointer-events: auto;
+            color: #fff;
+        }
+        body.scrub-mode.at-stop .spot.is-zone::after { transform: scale(1); }
+        body.scrub-mode.at-stop .spot.is-zone::before {
+            animation: spotPulse 2.6s ease-out infinite;
+            animation-delay: var(--pd, 0s);
+            opacity: 1;
+        }
+
+        /* 資訊卡 */
+        .card {
+            position: fixed; z-index: 12; right: 26px; bottom: 26px;
+            width: min(330px, calc(100vw - 40px));
+            padding: 20px 22px; background: #fff; border: 1px solid #e8eaef;
+            border-radius: 14px; box-shadow: 0 18px 48px rgba(35, 44, 76, .16);
+            opacity: 0; visibility: hidden; transform: translateY(14px);
+            transition: opacity .3s ease, transform .3s ease, visibility .3s;
+        }
+        .card.on { opacity: 1; visibility: visible; transform: none; }
+        .card b { display: block; color: var(--blue); font-size: 17px; font-weight: 700; letter-spacing: .05em; }
+        .card i { display: block; margin: 4px 0 10px; color: var(--orange); font-style: normal; font-size: 10.5px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+        .card p { margin: 0; font-size: 13px; line-height: 1.85; color: #4a5160; letter-spacing: .02em; }
+        .card button {
+            position: absolute; top: 10px; right: 12px; border: 0; background: none;
+            color: #b7bcc7; font-size: 18px; cursor: pointer; line-height: 1;
+        }
+        .card button:hover { color: var(--ink); }
+
+        .hint {
+            position: fixed; z-index: 9; left: 26px; bottom: 22px;
+            color: #a7adb8; font-size: 10.5px; font-weight: 600; letter-spacing: .18em;
+        }
+
+        .loading {
+            position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+            background: #fff; color: var(--sub); font-size: 11px; letter-spacing: .34em;
+            transition: opacity .6s ease;
+        }
+        .loading.is-done { opacity: 0; pointer-events: none; }
+
+        /* 嵌入模式（?embed=1）：隱藏所有 UI，只留 3D 畫面 */
+        body.embed .masthead, body.embed .zone-nav, body.embed .zone-tag,
+        body.embed .hint, body.embed .card, body.embed #spots { display: none !important; }
+        /* ?embed=1&spots=1：保留熱點與資訊卡 */
+        body.embed.spots #spots { display: block !important; }
+        body.embed.spots .card { display: block !important; }
+        /* 滾動巡覽：目前區域的錨點熱點轉橘 */
+        .spot.is-zone::after { background: var(--orange); }
+        .spot.is-zone::before { background: rgba(247, 148, 29, .3); }
+        /* ?circle=1：畫布透明，body 畫大圓弧底紋＋淡點陣 */
+        body.embed-clear {
+            background:
+                radial-gradient(rgba(148, 163, 184, .15) 1.1px, transparent 1.2px) 0 0 / 26px 26px,
+                radial-gradient(circle 46vw at 53% 45%, #ebeff4 0%, rgba(238, 242, 247, .85) 52%, rgba(248, 250, 252, 0) 72%),
+                var(--pagebg, #f8fafc);
+        }
+
+        @media (max-width: 760px) {
+            .hint { display: none; }
+            .zone-nav span { display: none; }
+            .zone-nav { padding: 11px 12px; }
+            .card { right: 12px; bottom: 12px; }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="stage"></canvas>
+    <div id="spots"></div>
+
+    <div class="masthead">
+        <h1>Our Business</h1>
+        <p>一座場站看懂台普威 — 太陽能發電、儲能系統到變電輸配的完整電能解決方案。</p>
+    </div>
+
+    <div class="zone-nav prev" id="zonePrev">
+        <svg width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="M8 1 2 7l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="zonePrevLabel">變電站</span>
+    </div>
+    <div class="zone-nav next" id="zoneNext">
+        <span id="zoneNextLabel">太陽能場</span>
+        <svg width="9" height="14" viewBox="0 0 9 14" fill="none"><path d="m1 1 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+
+    <div class="zone-tag" id="zoneTag"><b id="zoneTagText"></b><i></i><u></u></div>
+
+    <div class="card" id="card">
+        <button id="cardClose" aria-label="close">×</button>
+        <b id="cardTitle"></b>
+        <i id="cardKicker"></i>
+        <p id="cardBody"></p>
+    </div>
+
+    <p class="hint">拖曳環繞 · 滾輪縮放 · 點擊藍色熱點</p>
+    <div class="loading" id="loading">BUILDING SITE</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+        import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+        import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+
+        /* ══ URL 參數 ═══════════════════════════════════════
+           ?embed=1        嵌入模式：隱藏所有 UI，純 3D 畫面（給 index 頁 iframe 用）
+           ?embed=1&gui=1    嵌入模式下仍開啟調整面板
+           ?embed=1&spots=1  嵌入模式下保留藍色熱點＋資訊卡
+           ?bg=f8fafc        指定背景色（不含 #），與外層頁面底色無縫
+           ?circle=1         透明畫布，3D 後方畫大圓弧底紋＋點陣（hero 嵌入用）
+           ?az=43.6&po=70.4  初始視角：方位角/俯仰角（度）
+           ?fov=48           視野範圍（等距框景高的一半）
+           ?spin=0           關閉自轉；?spin=3 卷軸特寫時以 3 度/秒繞場站自轉
+           ?wire=1           全部變線稿（0～1；中間值＝只有焦點框內維持實體）
+           外層控制：iframe.contentWindow.postMessage({type:'ob:zone', index:0-4}) 切換區域 */
+        const Q = new URLSearchParams(location.search);
+        const EMBED = Q.has('embed');
+        if (EMBED) {
+            document.body.classList.add('embed');
+            if (Q.has('spots')) document.body.classList.add('spots');
+        }
+
+        /* ══ 色階：白模底＋參考圖的實色件 ═════════════════════
+           base/soft/mid/deep 維持白模階，另開實色桶：
+           edge＝橘色管線、pv＝深藍光電板、leaf/leaf2＝植栽兩階綠、
+           trunk＝樹幹、gravel＝碎石鋪面 */
+        /* 白色系配色＋材質層次：主體維持白，
+           有說明的設備（貨櫃/變壓器/風機/鐵塔/控制室/太陽能）
+           靠貼圖紋理與一階灰的材質色讀出金屬、混凝土、百葉質感 */
+        const CLAY = {
+            bg: '#ffffff',
+            base: '#ffffff',         // 鈑金白（貨櫃、控制室外牆 × tex-panel）
+            soft: '#fafafa',         // 混凝土（台座、基礎 × tex-concrete）
+            mid: '#ffffff',          // 金屬構件（鐵塔、門型架、風機法蘭 × tex-metal）
+            deep: '#ffffff',         // 百葉/格柵（散熱面 × tex-louver）
+            edge: '#ffffff',
+            pipeB: '#86c6be',        // 貨櫃飾條：淡青
+            pipeY: '#ffffff',
+            pipeW: '#ffffff',
+            pv: '#ffffff',           // 太陽能板：深藍紋理由 tex-pv 提供
+            leaf: '#ffffff',
+            leaf2: '#ffffff',
+            trunk: '#ffffff',
+            gravel: '#ffffff'        // 碎石鋪面 × tex-gravel
+        };
+        /* ══ 程序化材質貼圖：做不進幾何的細節用貼圖補 ═════════
+           碎石＝密集卵石斑點、光電板＝電池片網格＋高光暈、
+           鏈網圍籬＝斜向菱格（帶 alpha）、混凝土＝細噪點＋伸縮縫 */
+        function canvasTex(size, draw) {
+            const cv = document.createElement('canvas');
+            cv.width = cv.height = size;
+            draw(cv.getContext('2d'), size);
+            const t = new THREE.CanvasTexture(cv);
+            t.colorSpace = THREE.SRGBColorSpace;
+            t.wrapS = t.wrapT = THREE.RepeatWrapping;
+            t.anisotropy = 8;
+            return t;
+        }
+        const TEX = {
+            gravel: canvasTex(1024, (ctx, s) => {
+                ctx.fillStyle = '#e2e4e7';
+                ctx.fillRect(0, 0, s, s);
+                for (let i = 0; i < 5200; i++) {
+                    const g = 208 + Math.floor(Math.random() * 40) - 20;
+                    ctx.fillStyle = `rgb(${g},${g + 1},${g + 3})`;
+                    ctx.beginPath();
+                    ctx.ellipse(Math.random() * s, Math.random() * s,
+                        2 + Math.random() * 4.5, 1.6 + Math.random() * 3.4,
+                        Math.random() * Math.PI, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }),
+            pv: null,   // 於下方以完整繪製建立
+            fence: canvasTex(256, (ctx, s) => {
+                ctx.clearRect(0, 0, s, s);
+                ctx.strokeStyle = 'rgba(255,255,255,.95)';
+                ctx.lineWidth = 3;
+                for (let k = -s; k < s * 2; k += 22) {
+                    ctx.beginPath(); ctx.moveTo(k, 0); ctx.lineTo(k + s, s); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(k + s, 0); ctx.lineTo(k, s); ctx.stroke();
+                }
+            }),
+            concrete: canvasTex(512, (ctx, s) => {
+                ctx.fillStyle = '#f2f3f5';
+                ctx.fillRect(0, 0, s, s);
+                for (let i = 0; i < 2400; i++) {
+                    const g = 234 + Math.floor(Math.random() * 14) - 7;
+                    ctx.fillStyle = `rgba(${g},${g},${g + 2},.7)`;
+                    ctx.fillRect(Math.random() * s, Math.random() * s, 2, 2);
+                }
+                ctx.strokeStyle = 'rgba(190,193,198,.5)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(1, 1, s - 2, s - 2);
+            }),
+        };
+        /* 貨櫃屋頂貼圖：6 道浪板肋（帶高光與陰影邊）＋中央檢修走道＋
+           兩側收邊條＋四角吊點。屋頂是等距視角最大可視面，全部畫進貼圖 */
+        TEX.roof = canvasTex(1024, (ctx, s) => {
+            ctx.fillStyle = '#fdfdfe';
+            ctx.fillRect(0, 0, s, s);
+            // 6 道浪板肋（沿 U 方向＝貨櫃長邊）
+            const ribs = 6, pad = s * .06;
+            for (let i = 0; i < ribs; i++) {
+                const cx = pad + (s - pad * 2) * (i + .5) / ribs;
+                const rw = s * .052;
+                const g = ctx.createLinearGradient(cx - rw, 0, cx + rw, 0);
+                g.addColorStop(0, '#d8dce1');
+                g.addColorStop(.28, '#ffffff');
+                g.addColorStop(.5, '#f7f9fb');
+                g.addColorStop(.72, '#eaedf1');
+                g.addColorStop(1, '#d3d7dd');
+                ctx.fillStyle = g;
+                ctx.fillRect(cx - rw, s * .07, rw * 2, s * .86);
+                ctx.fillStyle = 'rgba(255,255,255,.9)';       // 肋頂高光
+                ctx.fillRect(cx - rw * .22, s * .07, rw * .44, s * .86);
+            }
+            // 中央檢修走道（防滑紋）
+            const wy = s * .43, wh = s * .14;
+            ctx.fillStyle = '#f1f3f6';
+            ctx.fillRect(0, wy, s, wh);
+            ctx.strokeStyle = 'rgba(198,203,210,.85)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, wy, s, wh);
+            ctx.fillStyle = 'rgba(206,211,218,.55)';
+            for (let x = 6; x < s; x += 14) ctx.fillRect(x, wy + 4, 5, wh - 8);
+            // 兩側收邊條
+            ctx.fillStyle = '#e6e9ed';
+            ctx.fillRect(0, 0, s, s * .055);
+            ctx.fillRect(0, s * .945, s, s * .055);
+            ctx.strokeStyle = 'rgba(190,195,203,.9)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(0, s * .055); ctx.lineTo(s, s * .055);
+            ctx.moveTo(0, s * .945); ctx.lineTo(s, s * .945); ctx.stroke();
+            // 四角吊點
+            ctx.fillStyle = '#c8ccd3';
+            [[s * .045, s * .028], [s * .955, s * .028], [s * .045, s * .972], [s * .955, s * .972]]
+                .forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, s * .016, 0, Math.PI * 2); ctx.fill(); });
+        });
+
+        // 鈑金面板：白底＋內縮面板縫＋四角鉚釘＋極淡直紋（每個白色量體都吃它）
+        TEX.panel = canvasTex(512, (ctx, s) => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, s, s);
+            for (let i = 0; i < 900; i++) {
+                const g = 249 + Math.floor(Math.random() * 6) - 3;
+                ctx.fillStyle = `rgba(${g},${g},${g + 1},.55)`;
+                ctx.fillRect(Math.random() * s, Math.random() * s, 1.6, 8 + Math.random() * 20);
+            }
+            ctx.strokeStyle = 'rgba(205,209,215,.75)';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(26, 26, s - 52, s - 52);
+            ctx.strokeStyle = 'rgba(228,231,235,.8)';
+            ctx.strokeRect(29, 29, s - 58, s - 58);
+            ctx.fillStyle = 'rgba(190,194,200,.85)';
+            [[40, 40], [s - 40, 40], [40, s - 40], [s - 40, s - 40]].forEach(([x, y]) => {
+                ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill();
+            });
+        });
+        // 金屬拉絲：框架與細件
+        TEX.metal = canvasTex(256, (ctx, s) => {
+            ctx.fillStyle = '#eef0f2';
+            ctx.fillRect(0, 0, s, s);
+            for (let i = 0; i < 700; i++) {
+                const g = 232 + Math.floor(Math.random() * 14) - 7;
+                ctx.fillStyle = `rgba(${g},${g},${g + 2},.6)`;
+                ctx.fillRect(0, Math.random() * s, s, 1);
+            }
+        });
+        // 百葉細紋：格柵、窗、凹陷件
+        TEX.louver = canvasTex(256, (ctx, s) => {
+            ctx.fillStyle = '#dcdfe4';
+            ctx.fillRect(0, 0, s, s);
+            for (let y2 = 4; y2 < s; y2 += 12) {
+                ctx.fillStyle = 'rgba(176,181,188,.85)';
+                ctx.fillRect(0, y2, s, 4);
+                ctx.fillStyle = 'rgba(240,242,245,.9)';
+                ctx.fillRect(0, y2 + 4, s, 2);
+            }
+        });
+        // 管件光澤：白底縱向亮帶（乘上股色後成為高光）
+        TEX.pipe = canvasTex(128, (ctx, s) => {
+            const g = ctx.createLinearGradient(0, 0, s, 0);
+            g.addColorStop(0, '#cfcfcf');
+            g.addColorStop(.32, '#ffffff');
+            g.addColorStop(.5, '#f2f2f2');
+            g.addColorStop(.78, '#c4c4c4');
+            g.addColorStop(1, '#cfcfcf');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, s, s);
+        });
+
+        /* ── 材質圖外部掛載點 ─────────────────────────────────
+           程序化貼圖只是預設底稿；把同名 PNG 放進 site/textures/ 即自動覆蓋：
+             textures/tex-panel.png    白櫃鈑金面板
+             textures/tex-metal.png    金屬拉絲
+             textures/tex-louver.png   百葉格柵
+             textures/tex-pipe.png     管件高光
+             textures/tex-gravel.png   碎石鋪面
+             textures/tex-concrete.png 混凝土
+             textures/tex-fence.png    鏈網圍籬（含透明）
+             textures/tex-pv.png       太陽能電池片
+           （現行版本已匯出同名檔案在該資料夾，直接用影像軟體改即可） */
+        /* 回傳 Promise：圖集必須等這些檔案都載完才烘，否則烘進去的是程序化
+           底稿而不是美術改過的 PNG（例如 tex-panel.png 實際是 1254²，
+           程序化底稿只有 512²，不等就永遠拿不到高解析度那張）。 */
+        function mountFileTextures() {
+            const files = {
+                panel: 'tex-panel.png', metal: 'tex-metal.png', louver: 'tex-louver.png',
+                pipe: 'tex-pipe.png', gravel: 'tex-gravel.png', concrete: 'tex-concrete.png',
+                fence: 'tex-fence.png', pv: 'tex-pv.png', roof: 'tex-roof.png',
+                // 拆細後新增的分頁
+                blade: 'tex-blade.png', bladeTip: 'tex-bladetip.png',
+                grate: 'tex-grate.png',
+                trunk: 'tex-trunk.png', leaf: 'tex-leaf.png', leaf2: 'tex-leaf2.png',
+                pipeB: 'tex-pipeb.png', pipeY: 'tex-pipey.png', pipeW: 'tex-pipew.png',
+            };
+            return Promise.all(Object.entries(files).map(([key, file]) => new Promise(done => {
+                if (!TEX[key]) return done();
+                new THREE.TextureLoader().load('textures/' + file, img => {
+                    TEX[key].image = img.image;
+                    TEX[key].needsUpdate = true;
+                    done();
+                }, undefined, () => done());   // 檔案不存在就沿用程序化底稿
+            })));
+        }
+
+        /* ══ UV 圖集（textures/tex-atlas.png）═══════════════════
+           把分散的 8 張貼圖併成單張 2048²，材質改吃「圖集的一塊區域」。
+           切法是 texture.offset/repeat，幾何 UV 一律維持 0~1 不動 ——
+           所以模型不必重新展開，美術改一張圖就能改全場。
+
+           兩個不能進圖集的例外（進了會破圖，切片平鋪會取樣到隔壁區塊）：
+             fence  repeat 46×2 —— 鏈網要沿著圍籬長度重複
+             gravel 大面積地坪，需要 RepeatWrapping 才不會被拉糊
+           這兩張維持獨立檔案，其餘六張進圖集。
+
+           每塊四周留 PAD 像素邊距，mipmap 縮到小尺寸時才不會吃到鄰居。 */
+        const ATLAS_SIZE = 2048, ATLAS_PAD = 8;
+        const ATLAS_TILED = ['fence', 'gravel'];     // 留在圖集外
+        // 版面：512 的放上兩排、256/128 的收在下方，總佔用 1024×1536
+        /* 版面：全部 POT 對齊，每一階 mip 的邊界都落在整數 texel。
+           深藍的 pv 刻意放右下角、與其他淺色圖隔一段距離 ——
+           mip 縮到很小時相鄰區塊會互相平均，淺色互滲看不出來，
+           深色滲進白件才會出現「白櫃遠看偏藍」。 */
+        const ATLAS_MAP = {
+            // ── 大面積主體（1024² / 512²）────────────────────────
+            panel: [0, 0, 1024, 1024],       // 建築白牆鈑金
+            roof: [1024, 0, 512, 512],       // 貨櫃屋頂浪板（材質會再轉 90°）
+            concrete: [1536, 0, 512, 512],   // 混凝土台座／基礎
+            blade: [1024, 512, 512, 512],    // 風機葉片（原本跟牆共用 panel）
+            pv: [1536, 512, 512, 512],       // 太陽能電池片
+            metal: [0, 1024, 512, 512],      // 鋼構：鐵塔／門型架／欄杆
+            louver: [512, 1024, 512, 512],   // 散熱百葉／窗
+            // (1024,1024) 與 (1536,1024) 兩格 512² 保留：
+            // gravel／fence 因為要平鋪不能進圖集，這兩格留給之後新拆的材質
+            // ── 細件（256²）──────────────────────────────────────
+            pipe: [0, 1536, 256, 256],       // 管件通用
+            pipeB: [256, 1536, 256, 256],    // 飾條青（原本與 pipe 共用）
+            pipeY: [512, 1536, 256, 256],    // 管線黃（原本與 pipe 共用）
+            pipeW: [768, 1536, 256, 256],    // 管線白（原本完全沒貼圖）
+            bladeTip: [1024, 1536, 256, 256],// 葉尖（原本與 pipe 共用）
+            grate: [1280, 1536, 256, 256],   // 格柵走道／踏板（區塊已備好，尚未指派給幾何）
+            trunk: [1536, 1536, 256, 256],   // 樹幹（原本沒貼圖）
+            leaf: [1792, 1536, 256, 256],    // 樹冠 A（原本沒貼圖）
+            leaf2: [0, 1792, 256, 256],      // 樹冠 B
+            // y 1792 之後還有 7 格 256² 空位，之後要再拆材質直接往這排
+        };
+        /* 需要在烘圖集時就轉 90° 的分頁。
+           座標系規則（整套只有這一條，別再加第二種）：
+             幾何 UV 一律 0~1 → atlasSlice 只做 offset/repeat → 取樣落在區塊內。
+           任何轉向都在烘的階段完成，texture.rotation/center 一律不用。
+           這份清單必須與 tools/build-atlas.js 的同名常數一致。 */
+        const ATLAS_ROT90 = ['roof'];
+
+        // 把既有的程序化 canvas（或已載入的檔案影像）畫進單張圖集
+        function bakeAtlas() {
+            const cv = document.createElement('canvas');
+            cv.width = cv.height = ATLAS_SIZE;
+            const ctx = cv.getContext('2d');
+            // 空白填白：mip 滲色只會滲成白，符合清水模色調；留黑會出現髒邊
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, ATLAS_SIZE, ATLAS_SIZE);
+            // panel 檔案版 1254² 要縮進 1008 格，預設的縮圖品質會糊掉細紋
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            const missing = [];
+            for (const key in ATLAS_MAP) {
+                const src = TEX[key] && TEX[key].image;
+                if (!src) { missing.push(key); continue; }   // 缺圖不能靜默，會無聲烘成白底
+                const [x, y, w, h] = ATLAS_MAP[key];
+                const iw = w - ATLAS_PAD * 2, ih = h - ATLAS_PAD * 2;
+                /* 需要轉向的貼圖在這裡就轉好（屋頂的浪板肋要沿貨櫃長向）。
+                   不能留到 three 那邊用 texture.rotation —— 那個繞的 center
+                   是幾何 UV 空間，跟圖集的 offset/repeat 疊起來會把 UV
+                   甩到圖集外。這裡轉完，切片端就只剩單純的 offset/repeat。
+                   必須與 tools/build-atlas.js 的 rot90 保持一致。 */
+                if (ATLAS_ROT90.includes(key)) {
+                    ctx.save();
+                    ctx.translate(x + ATLAS_PAD + iw / 2, y + ATLAS_PAD + ih / 2);
+                    ctx.rotate(Math.PI / 2);
+                    ctx.drawImage(src, -iw / 2, -ih / 2, iw, ih);
+                    ctx.restore();
+                } else {
+                    ctx.drawImage(src, x + ATLAS_PAD, y + ATLAS_PAD, iw, ih);
+                }
+                /* 邊距用邊緣像素往外拉伸（edge-extend），不能留白 ——
+                   mipmap 會把白邊混進來變成亮框。
+                   取樣來源是「已經畫進圖集的內容」而不是原始 src：
+                   轉過向的貼圖若拿 src 的邊，邊距會跟本體對不上。 */
+                const bx = x + ATLAS_PAD, by = y + ATLAS_PAD;
+                ctx.drawImage(cv, bx, by, iw, 1, bx, y, iw, ATLAS_PAD);                       // 上
+                ctx.drawImage(cv, bx, by + ih - 1, iw, 1, bx, y + h - ATLAS_PAD, iw, ATLAS_PAD); // 下
+                ctx.drawImage(cv, bx, by, 1, ih, x, by, ATLAS_PAD, ih);                       // 左
+                ctx.drawImage(cv, bx + iw - 1, by, 1, ih, x + w - ATLAS_PAD, by, ATLAS_PAD, ih); // 右
+            }
+            if (missing.length) console.warn('[our-business] 圖集缺少來源貼圖（該區塊會是白底）：', missing.join(', '));
+            cv.missing = missing;
+            return cv;
+        }
+
+        /* 從圖集切一塊出來當獨立貼圖：幾何 UV 0~1 會剛好吃滿該區域。
+           這裡刻意不支援旋轉 —— texture.center/rotation 的座標系是「幾何 UV
+           空間」，跟圖集的 offset/repeat 疊起來會把 UV 甩到圖集外（屋頂就是
+           這樣整片變白）。需要轉向的貼圖一律在 tools/build-atlas.js 烘的
+           時候就轉好，切片這端維持單純的 offset/repeat。 */
+        function atlasSlice(sheet, key) {
+            const [x, y, w, h] = ATLAS_MAP[key];
+            const t = sheet.clone();
+            t.needsUpdate = true;
+            t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;   // 切片不可平鋪
+            const rx = (w - ATLAS_PAD * 2) / ATLAS_SIZE, ry = (h - ATLAS_PAD * 2) / ATLAS_SIZE;
+            const ox = (x + ATLAS_PAD) / ATLAS_SIZE, oy = 1 - (y + h - ATLAS_PAD) / ATLAS_SIZE;
+            t.repeat.set(rx, ry);
+            t.offset.set(ox, oy);
+            t.colorSpace = THREE.SRGBColorSpace;
+            t.anisotropy = 8;
+            return t;
+        }
+
+        /* 啟用圖集：優先讀 textures/tex-atlas.png（美術改過的），
+           讀不到就用現有程序化貼圖即時烘一張，畫面一樣、不必先產檔。 */
+        /* 套用圖集：把每個材質原本吃的整張貼圖，換成圖集上的對應切片。
+           材質是靠 MAT_OPT 在建立時帶 map 進去的，所以這裡用「原貼圖物件」
+           反查是哪一個 key —— 不必改動任何材質建立的程式碼。 */
+        let ATLAS_TEX = null, ATLAS_ON = false;
+        // 場景是否已建好（面板的「重烘／切回」按鈕要靠它決定是否走訪替換）
+        let SCENE_READY = false, SCENE_REF = null;
+        const TEX_ORIG = {};                       // 保留原始整張貼圖，可切回來比對
+        function useAtlas(sheet) {
+            ATLAS_TEX = sheet;
+            const slices = {};
+            for (const key in ATLAS_MAP) {
+                if (!TEX_ORIG[key]) TEX_ORIG[key] = TEX[key];
+                slices[key] = atlasSlice(sheet, key);
+            }
+            /* 場景已建好時才需要走訪替換。不能用 typeof scene 判斷 ——
+               scene 是 const，在 TDZ 內連 typeof 都會拋 ReferenceError，
+               而正常流程（在建場景前掛圖集）根本走不到這裡。用旗標判斷。 */
+            const swap = m => {
+                if (!m || !m.map) return;
+                for (const key in slices)
+                    if (m.map === TEX_ORIG[key] || m.map === TEX[key]) {
+                        m.map = slices[key]; m.needsUpdate = true; return;
+                    }
+            };
+            if (SCENE_READY) SCENE_REF.traverse(o => { if (o.isMesh) [].concat(o.material).forEach(swap); });
+            for (const key in slices) TEX[key] = slices[key];   // 之後才建立的材質直接吃切片
+            ATLAS_ON = true;
+        }
+        // 切回獨立貼圖（用來對照圖集有沒有畫錯位）
+        function useSeparateTextures() {
+            if (!ATLAS_ON) return;
+            const swapBack = m => {
+                if (!m || !m.map) return;
+                for (const key in TEX_ORIG)
+                    if (m.map === TEX[key]) { m.map = TEX_ORIG[key]; m.needsUpdate = true; return; }
+            };
+            if (SCENE_READY) SCENE_REF.traverse(o => { if (o.isMesh) [].concat(o.material).forEach(swapBack); });
+            for (const key in TEX_ORIG) TEX[key] = TEX_ORIG[key];
+            ATLAS_ON = false;
+        }
+
+        function mountAtlas() {
+            return new Promise(resolve => {
+                new THREE.TextureLoader().load('textures/tex-atlas.png',
+                    t => { t.colorSpace = THREE.SRGBColorSpace; t.flipY = true; useAtlas(t); resolve('file'); },
+                    undefined,
+                    () => {   // 沒有檔案：用現有貼圖即時烘一張
+                        const t = new THREE.CanvasTexture(bakeAtlas());
+                        t.colorSpace = THREE.SRGBColorSpace;
+                        useAtlas(t);
+                        resolve('baked');
+                    });
+            });
+        }
+
+        // 匯出圖集給美術：存成 textures/tex-atlas.png 覆蓋即可
+        function downloadAtlas() {
+            bakeAtlas().toBlob(b => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(b);
+                a.download = 'tex-atlas.png';
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+            }, 'image/png');
+        }
+
+        // 光電板貼圖：深藍電池片 6×3 格＋細白匯流條＋左上高光
+        TEX.pv = canvasTex(512, (ctx, s) => {
+            const grd = ctx.createLinearGradient(0, 0, s, s);
+            grd.addColorStop(0, '#2a55a0');
+            grd.addColorStop(.45, '#1d3f7c');
+            grd.addColorStop(1, '#16305f');
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, s, s);
+            ctx.strokeStyle = 'rgba(230,238,250,.9)';
+            ctx.lineWidth = 4;
+            for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(i * s / 6, 0); ctx.lineTo(i * s / 6, s); ctx.stroke(); }
+            for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(0, i * s / 3); ctx.lineTo(s, i * s / 3); ctx.stroke(); }
+            ctx.strokeStyle = 'rgba(190,205,230,.35)';
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i < 24; i++) { ctx.beginPath(); ctx.moveTo(i * s / 24, 0); ctx.lineTo(i * s / 24, s); ctx.stroke(); }
+            const gl = ctx.createLinearGradient(0, 0, s * .7, s * .7);
+            gl.addColorStop(0, 'rgba(255,255,255,.28)');
+            gl.addColorStop(.4, 'rgba(255,255,255,0)');
+            ctx.fillStyle = gl;
+            ctx.fillRect(0, 0, s, s);
+            ctx.strokeStyle = '#eef1f5';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(3, 3, s - 6, s - 6);
+        });
+        /* ── 拆細的材質分頁 ──────────────────────────────────────
+           這些原本跟別人共用貼圖（葉片＝牆、三種管線＝同一張），
+           或根本沒貼圖（白管、樹幹、樹冠）。拆開之後美術可以各自畫。
+           這裡只畫「夠用的底稿」——正式美術由 textures/tex-*.png 覆蓋，
+           檔案由 tools/build-atlas.js 產生，那支才是美術的單一來源。 */
+        const shade = (ctx, s, hex) => { ctx.fillStyle = hex; ctx.fillRect(0, 0, s, s); };
+        const streak = (ctx, s, n, col, w = 1) => {
+            ctx.strokeStyle = col; ctx.lineWidth = w;
+            for (let i = 0; i < n; i++) {
+                const y = Math.random() * s;
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(s, y); ctx.stroke();
+            }
+        };
+        TEX.blade = canvasTex(512, (c, s) => {          // 葉片：展向細紋＋前緣分模線
+            shade(c, s, '#fbfcfd'); streak(c, s, 260, 'rgba(196,203,212,.30)');
+            c.fillStyle = 'rgba(176,184,196,.55)'; c.fillRect(0, s * .49, s, s * .02);
+        });
+        TEX.bladeTip = canvasTex(256, (c, s) => {       // 葉尖：往端部加深
+            const g = c.createLinearGradient(0, 0, s, 0);
+            g.addColorStop(0, '#f2f4f7'); g.addColorStop(1, '#cdd3db');
+            c.fillStyle = g; c.fillRect(0, 0, s, s);
+        });
+        TEX.grate = canvasTex(256, (c, s) => {          // 格柵：條狀開口
+            shade(c, s, '#e9ecf0');
+            c.fillStyle = 'rgba(120,130,144,.55)';
+            for (let x = 4; x < s; x += 12) c.fillRect(x, 3, 6, s - 6);
+        });
+        TEX.trunk = canvasTex(256, (c, s) => {          // 樹幹：直向木理
+            shade(c, s, '#efeae6'); streak(c, s, 60, 'rgba(150,138,128,.35)', 2);
+        });
+        const leafDraw = tone => (c, s) => {
+            shade(c, s, tone);
+            for (let i = 0; i < 260; i++) {
+                c.fillStyle = `rgba(255,255,255,${.05 + Math.random() * .12})`;
+                c.beginPath();
+                c.arc(Math.random() * s, Math.random() * s, 3 + Math.random() * 9, 0, Math.PI * 2);
+                c.fill();
+            }
+        };
+        TEX.leaf = canvasTex(256, leafDraw('#eef1ee'));
+        TEX.leaf2 = canvasTex(256, leafDraw('#e9eeea'));
+        // 三種管線各自一張：底稿都是縱向高光，差在溝紋密度，方便美術辨識
+        const pipeDraw = grooves => (c, s) => {
+            const g = c.createLinearGradient(0, 0, s, 0);
+            g.addColorStop(0, '#cfcfcf'); g.addColorStop(.3, '#ffffff');
+            g.addColorStop(.6, '#f2f2f2'); g.addColorStop(1, '#c4c4c4');
+            c.fillStyle = g; c.fillRect(0, 0, s, s);
+            c.fillStyle = 'rgba(150,158,170,.28)';
+            for (let i = 1; i < grooves; i++) c.fillRect(s * i / grooves, 0, 2, s);
+        };
+        TEX.pipeB = canvasTex(256, pipeDraw(4));
+        TEX.pipeY = canvasTex(256, pipeDraw(6));
+        TEX.pipeW = canvasTex(256, pipeDraw(3));
+
+        TEX.fence.repeat.set(46, 2);
+        /* 先等貼圖檔載完，再（依需要）烘圖集 —— 兩件事都必須在建場景之前完成，
+           材質才會一次就吃到正確的貼圖，不必事後走訪整個場景替換。
+           這是 <script type="module">，可以用 top-level await。 */
+        await mountFileTextures();
+        if (Q.get('atlas') !== '0') {
+            const src = await mountAtlas();
+            console.info(`[our-business] UV 圖集：${src === 'file' ? '讀自 textures/tex-atlas.png' : '由現有貼圖即時烘製（尚未產檔，可從面板匯出）'}`);
+        }
+
+        // 各桶材質微調：光電板帶光澤貼圖、碎石貼圖、植栽粗糙
+        /* 注意：這裡不要放 color —— 材質色一律由 CLAY 決定（調整面板同步），
+           之前每桶硬寫 color:0xffffff 會把 CLAY 的材質色整批蓋掉 */
+        const MAT_OPT = {
+            base: { roughness: .88, map: TEX.panel },
+            soft: { roughness: .98, map: TEX.concrete },
+            mid: { roughness: .58, metalness: .22, map: TEX.metal },   // 鐵塔/門型架/構件：鋼材感
+            deep: { roughness: .92, map: TEX.louver },
+            pv: { roughness: .35, metalness: .18, map: TEX.pv },
+            gravel: { roughness: 1, map: TEX.gravel },
+            // 三種管線各自一張（原本共用 TEX.pipe，美術改不動單一種）
+            edge: { roughness: .42, map: TEX.pipe },
+            pipeB: { roughness: .42, map: TEX.pipeB },
+            pipeY: { roughness: .42, map: TEX.pipeY },
+            pipeW: { roughness: .3, metalness: .06, map: TEX.pipeW },
+            // 植栽原本完全沒貼圖，是純色塊
+            leaf: { roughness: 1, map: TEX.leaf },
+            leaf2: { roughness: 1, map: TEX.leaf2 },
+            trunk: { roughness: 1, map: TEX.trunk },
+        };
+
+        /* 導角圓盒：主要量體用它，邊緣有 chamfer 才有「精模」的光 */
+        const rboxAt = (w, h, d, x = 0, y = 0, z = 0, r = .06) =>
+            new RoundedBoxGeometry(w, h, d, 2, Math.min(r, w / 2.2, h / 2.2, d / 2.2)).translate(x, y, z);
+
+        /* 位置雜湊置換：樹冠頂點沿徑向抖動，接縫頂點同值不裂 */
+        function ruffle(g, amp = .2) {
+            const p = g.attributes.position;
+            for (let i = 0; i < p.count; i++) {
+                const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+                const hsh = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453;
+                const m = 1 + ((hsh - Math.floor(hsh)) - .5) * amp;
+                p.setXYZ(i, x * m, y * (1 + ((hsh * 1.7 - Math.floor(hsh * 1.7)) - .5) * amp * .5), z * m);
+            }
+            g.computeVertexNormals();
+            return g;
+        }
+
+        /* ══ 場景（光量預算同 3d-eco-city）═══════════════════ */
+        const canvas = document.getElementById('stage');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+        renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+        renderer.toneMapping = THREE.NoToneMapping;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        /* 場景與太陽都是靜態的：關掉每幀重算陰影，改成只在需要時畫一次。
+           不關的話每幀都要把 25 萬三角形重繪進 4096² 深度圖，純浪費。
+           光源／位置一改（調整面板）就把 needsUpdate 打開重畫一次。 */
+        renderer.shadowMap.autoUpdate = false;
+        renderer.shadowMap.needsUpdate = true;
+        const redrawShadow = () => { renderer.shadowMap.needsUpdate = true; };
+        renderer.localClippingEnabled = true;   // 焦點特寫：局部裁切
+
+        /* ══ 焦點方框（世界座標 XZ）════════════════════════════
+           框內＝正常材質層，框外＝sketch 線稿層（白底＋灰線），
+           兩層用互補的裁切平面切分；r=999 等同全場正常。
+           捲動到站時 focusTo() 縮到該站的 fr 半徑，離站放大回全景 */
+        /* 全景站的框半徑：這個值要真的「涵蓋整個場景」，否則捲到最後
+           縮回全景時，外圈的鐵塔／風機會落在框外變成線稿，跟初始畫面對不上。
+           場景實測最遠半徑 124.5（門型架與外圍鐵塔），留一成餘裕取 140。 */
+        const FR_ALL = 140;
+        /* 初始框半徑直接用 FR_ALL —— 與「捲到最後縮回全景」用的是同一個值，
+           兩端才會是完全一樣的畫面。先前初始是 999、結尾是 95，雖然兩個
+           都算「全部實體」，但數值不同就代表兩端的裁切狀態不保證一致。 */
+        /* 聚焦框：X/Z 各自獨立的半寬（hx/hz），不再是單一半徑的正方形。
+           c* 是目前值、t* 是目標值，updateFocusPlanes 每幀平滑逼近。
+           初始等同 FR_ALL 的全景框，與「捲到最後縮回全景」用同一組數字。 */
+        const FOCUS = {
+            cx: 0, cz: 0, hx: FR_ALL, hz: FR_ALL,
+            tx: 0, tz: 0, thx: FR_ALL, thz: FR_ALL,
+        };
+        const PLANES_IN = [
+            new THREE.Plane(new THREE.Vector3(1, 0, 0), 999),
+            new THREE.Plane(new THREE.Vector3(-1, 0, 0), 999),
+            new THREE.Plane(new THREE.Vector3(0, 0, 1), 999),
+            new THREE.Plane(new THREE.Vector3(0, 0, -1), 999),
+        ];
+        const PLANES_OUT = [
+            new THREE.Plane(new THREE.Vector3(-1, 0, 0), -999),
+            new THREE.Plane(new THREE.Vector3(1, 0, 0), -999),
+            new THREE.Plane(new THREE.Vector3(0, 0, -1), -999),
+            new THREE.Plane(new THREE.Vector3(0, 0, 1), -999),
+        ];
+        /* 線稿強度：0＝全實體、1＝整場全部變線條。
+           原理是把「實體層」的焦點框半徑往下壓 —— 框內實體、框外線稿，
+           框收成 0 就代表沒有任何東西留在實體區，整場只剩 sketch 層。
+           乘在 focusTo 的半徑上，所以捲動特寫（applyScrub）照樣運作：
+           滑桿是全域倍率，不必去改每一站的參數。 */
+        // ?wire=1 全線稿、?wire=.5 半框；嵌入模式沒有面板，靠這個參數指定
+        const SKETCH = { amount: Math.min(1, Math.max(0, parseFloat(Q.get('wire')) || 0)) };
+        const wireR = r => r * (1 - SKETCH.amount);
+        // base* 記「未套線稿的原始尺寸」，滑桿才能反覆重算而不累乘
+        FOCUS.baseHX = FOCUS.thx; FOCUS.baseHZ = FOCUS.thz;
+
+        /* 指定聚焦框。兩種寫法：
+             focusBox(x0, x1, z0, z1)  緊貼設備的矩形（各站的 box）
+             focusTo(cx, cz, r)        舊的半徑正方形（沒給 box 的站與全景用） */
+        function focusBox(x0, x1, z0, z1) {
+            FOCUS.tx = (x0 + x1) / 2; FOCUS.tz = (z0 + z1) / 2;
+            FOCUS.baseHX = Math.abs(x1 - x0) / 2; FOCUS.baseHZ = Math.abs(z1 - z0) / 2;
+            FOCUS.thx = wireR(FOCUS.baseHX); FOCUS.thz = wireR(FOCUS.baseHZ);
+        }
+        const focusTo = (cx, cz, r) => focusBox(cx - r, cx + r, cz - r, cz + r);
+        function applySketchAmount() {
+            FOCUS.thx = wireR(FOCUS.baseHX); FOCUS.thz = wireR(FOCUS.baseHZ);
+        }
+        applySketchAmount();          // ?wire= 在開機就生效，不必等切站
+        FOCUS.hx = FOCUS.thx; FOCUS.hz = FOCUS.thz;   // 開場不做收框動畫，直接到位
+        function updateFocusPlanes(dt) {
+            const k = 1 - Math.exp(-dt * 9);   // 目標已是平滑插值，這裡只吸收捲動抖動
+            FOCUS.cx += (FOCUS.tx - FOCUS.cx) * k;
+            FOCUS.cz += (FOCUS.tz - FOCUS.cz) * k;
+            FOCUS.hx += (FOCUS.thx - FOCUS.hx) * k;
+            FOCUS.hz += (FOCUS.thz - FOCUS.hz) * k;
+            const { cx, cz, hx, hz } = FOCUS;
+            PLANES_IN[0].constant = -(cx - hx); PLANES_IN[1].constant = cx + hx;
+            PLANES_IN[2].constant = -(cz - hz); PLANES_IN[3].constant = cz + hz;
+            PLANES_OUT[0].constant = cx - hx; PLANES_OUT[1].constant = -(cx + hx);
+            PLANES_OUT[2].constant = cz - hz; PLANES_OUT[3].constant = -(cz + hz);
+        }
+        updateFocusPlanes(1);
+        // 正常材質層：只出現在焦點框內（含陰影同步裁切）
+        const clipNormal = m => { m.clippingPlanes = PLANES_IN; m.clipShadows = true; return m; };
+        // sketch 層材質：白底把後面東西遮乾淨，灰線畫輪廓，只出現在框外
+        const SKETCH_FILL = new THREE.MeshBasicMaterial({
+            color: 0xffffff, clippingPlanes: PLANES_OUT, clipIntersection: true,
+            polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2,
+        });
+        const SKETCH_LINE = new THREE.LineBasicMaterial({
+            color: 0x99a3ae, transparent: true, opacity: .5,
+            clippingPlanes: PLANES_OUT, clipIntersection: true,
+        });
+        /* EdgesGeometry 的夾角門檻：只有相鄰面夾角大於它才畫線。
+           風機塔身是 16 邊圓柱 → 相鄰面 360/16 = 22.5°，
+           原本的 24° 剛好把整根濾掉（線稿裡塔身會整個消失）。
+           改 21°：收進 16 邊（22.5°）與更粗的多邊形，
+           但仍濾掉 18 邊（20°）與更圓滑的面，線不會爆量。 */
+        const EDGE_DEG = 21;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(CLAY.bg);
+        scene.fog = new THREE.Fog(0xffffff, 330, 720);   // 正交相機距離固定 260，霧只掃遠景
+        if (Q.get('bg')) {                               // ?bg=f8fafc 指定背景色
+            scene.background.set('#' + Q.get('bg'));
+            scene.fog.color.set('#' + Q.get('bg'));
+        }
+        if (Q.has('circle')) {                           // ?circle=1 透明畫布＋圓弧底紋
+            document.body.classList.add('embed-clear');
+            if (Q.get('bg')) document.body.style.setProperty('--pagebg', '#' + Q.get('bg'));
+            scene.background = null;
+            renderer.setClearColor(0x000000, 0);
+        }
+
+        /* 等距（正交）相機：參考圖的等距角度 */
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, .5, 1200);
+        let viewH = 47;
+        function setFrustum() {
+            const a = innerWidth / innerHeight || 1;
+            camera.left = -viewH * a; camera.right = viewH * a;
+            camera.top = viewH; camera.bottom = -viewH;
+            camera.updateProjectionMatrix();
+        }
+        setFrustum();
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
+        scene.environmentIntensity = .15;
+
+        const hemi = new THREE.HemisphereLight(0xffffff, 0xffffff, 1.38);   // 整體調淡：天光補亮陰影面
+        scene.add(hemi);
+        const sun = new THREE.DirectionalLight(0xffffff, 1.45);
+        sun.position.set(-62, 120, 58);
+        sun.castShadow = true;
+        sun.shadow.mapSize.set(4096, 4096);
+        /* 陰影相機必須完整涵蓋地面：範圍外的地面片元會採樣到 shadow map
+           邊緣紋素，在白地面上拖出長條 artifact（地面同步縮到 240 見方） */
+        Object.assign(sun.shadow.camera, { left: -130, right: 130, top: 130, bottom: -130, near: 10, far: 460 });
+        sun.shadow.camera.updateProjectionMatrix();
+        sun.shadow.bias = -.0004;
+        sun.shadow.normalBias = .5;
+        scene.add(sun);
+        const fill = new THREE.DirectionalLight(0xffffff, .14);
+        fill.position.set(60, 40, -80);
+        scene.add(fill);
+
+        /* GTAO 環境光遮蔽：白模場景的立體感來源 —— 縫隙、簷下、
+           設備間距全部吃到接觸陰影，精細度直接上一階 */
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const gtao = new GTAOPass(scene, camera, innerWidth || 1, innerHeight || 1);
+        gtao.updateGtaoMaterial({ radius: 1.1, distanceExponent: 1.4, thickness: 1, scale: 1.3, samples: 16 });
+        gtao.blendIntensity = .6;   // 整體調淡：AO 灰調收弱
+        composer.addPass(gtao);
+        composer.addPass(new OutputPass());
+
+        // 地面：純白、只收陰影的視覺基準面
+        // 邊緣徑向淡出 → 底部與畫面背景無縫（不再出現被視窗切掉的灰色菱形邊）
+        const groundAlpha = (() => {
+            const cv = document.createElement('canvas');
+            cv.width = cv.height = 512;
+            const ctx = cv.getContext('2d');
+            const g = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
+            g.addColorStop(0, '#fff');
+            g.addColorStop(.52, '#fff');
+            g.addColorStop(.95, '#000');
+            g.addColorStop(1, '#000');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, 512, 512);
+            return new THREE.CanvasTexture(cv);
+        })();
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(176, 176).rotateX(-Math.PI / 2),   // 對角半徑 124 < 陰影相機 130
+            new THREE.MeshStandardMaterial({
+                color: 0xffffff, roughness: 1,
+                transparent: true, alphaMap: groundAlpha, depthWrite: false
+            }));
+        ground.position.y = -1.19;
+        ground.receiveShadow = true;
+        ground.renderOrder = -1;
+        scene.add(ground);
+
+        /* ══ 幾何工具（同 3d-eco-city）═══════════════════════ */
+        const V = (x, y, z) => new THREE.Vector3(x, y, z);
+        const boxAt = (w, h, d, x = 0, y = 0, z = 0) => new THREE.BoxGeometry(w, h, d).translate(x, y, z);
+        function strut(a, b, r = .09, seg = 5) {
+            const d = b.clone().sub(a), len = d.length();
+            if (len < 1e-4) return null;
+            const g = new THREE.CylinderGeometry(r, r, len, seg);
+            g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), d.normalize()));
+            g.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
+            return g;
+        }
+        function catenary(p0, p1, sag = .06, n = 16) {
+            const pts = [], L = p0.distanceTo(p1);
+            for (let i = 0; i <= n; i++) {
+                const t = i / n, p = p0.clone().lerp(p1, t);
+                p.y -= Math.sin(Math.PI * t) * L * sag;
+                pts.push(p);
+            }
+            return new THREE.CatmullRomCurve3(pts);
+        }
+        const xg = (g, x, y, z) => { if (g) g.translate(x, y, z); return g; };
+
+        // 幾何桶：全場按色階收桶，最後合併成十顆 mesh
+        const B = { base: [], soft: [], mid: [], deep: [], edge: [], pipeB: [], pipeY: [], pipeW: [], pv: [], leaf: [], leaf2: [], trunk: [], gravel: [] };
+        const PLATFORM_GEOMETRIES = { soft: [], mid: [] };
+        const ROOF_TILES = [];   // 貨櫃屋頂貼圖面（浪板畫在 TEX.roof 上）
+        const newL = () => ({ base: [], soft: [], mid: [], deep: [], edge: [], pipeB: [], pipeY: [], pipeW: [] });
+        const PLINTH_H = 0;
+        function commitL(L, px, pz, ry = 0, py = PLINTH_H) {
+            const m = new THREE.Matrix4().makeRotationY(ry).setPosition(px, py, pz);
+            for (const k in L) L[k].forEach(g => { g.applyMatrix4(m); B[k].push(g); });
+        }
+        function mergeCompat(list) {
+            const clean = list.filter(Boolean).map(g => {
+                const c = g.index ? g.toNonIndexed() : g;
+                if (!c.attributes.uv) {
+                    const n = c.attributes.position.count;
+                    c.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(n * 2), 2));
+                }
+                return c;
+            });
+            return clean.length ? mergeGeometries(clean, false) : null;
+        }
+        function mulberry32(seed) {
+            return () => {
+                seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+                let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+                t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+        const rng = mulberry32(20260816);
+        const rand = (a, b) => a + rng() * (b - a);
+
+        /* ══ 元件（移植自 3d-eco-city.html）══════════════════ */
+
+        /* ── 太陽能場：面朝 +Z 的斜板陣列＋匯流箱＋場內小道 ── */
+        function solarFarm(cx, cz, rows = 3, per = 4) {
+            const SB = 22, pw = 4, pd = 2;
+            for (let r = 0; r < rows; r++) for (let i = 0; i < per; i++) {
+                const x = cx - SB / 2 + 3.4 + i * (pw + .7), z = cz - SB / 2 + 4 + r * 5.4;
+                const tilt = .42;
+                const slab = (g) => { g.rotateX(tilt); g.translate(x, 1.5, z); return g; };
+                B.base.push(slab(boxAt(pw, .12, pd, 0, 0, 0)));                     // 白框
+                B.pv.push(slab(boxAt(pw - .22, .07, pd - .22, 0, .09, 0)));         // 深藍電池片
+                // 白色分格線：3 直 1 橫，一眼讀出「模組陣列」
+                [-pw / 4, 0, pw / 4].forEach(gx2 =>
+                    B.base.push(slab(boxAt(.05, .015, pd - .22, gx2, .135, 0))));
+                B.base.push(slab(boxAt(pw - .22, .015, .05, 0, .135, 0)));
+                /* 支架系統：縱向雙導軌＋中央扭矩管＋前後腳 */
+                [-pd * .28, pd * .28].forEach(oz => {
+                    const rail = boxAt(pw - .3, .07, .1, 0, -.09, oz);
+                    rail.rotateX(tilt); rail.translate(x, 1.5, z);
+                    B.mid.push(rail);
+                });
+                const tube = new THREE.CylinderGeometry(.07, .07, pw - .5, 8);
+                tube.rotateZ(Math.PI / 2); tube.rotateX(tilt);
+                tube.translate(x, 1.36, z);
+                B.mid.push(tube);
+                B.mid.push(boxAt(.16, 1.85, .16, x - pw / 2 + .4, .93, z - pd * .38));
+                B.mid.push(boxAt(.16, 1.85, .16, x + pw / 2 - .4, .93, z - pd * .38));
+                B.mid.push(boxAt(.16, 1, .16, x - pw / 2 + .4, .5, z + pd * .38));
+                B.mid.push(boxAt(.16, 1, .16, x + pw / 2 - .4, .5, z + pd * .38));
+            }
+            B.edge.push(boxAt(1.4, 1.5, 1, cx + SB / 2 - 2.4, .75, cz + SB / 2 - 3));   // 匯流箱（橘）
+            B.gravel.push(boxAt(SB + 2, .04, SB + 2, cx, .02, cz));                     // 場內碎石
+        }
+
+        /* ── 電池貨櫃（20 呎 ISO 櫃，門端 +X、風扇牆 −X）───── */
+        function cContainer(px, pz, ry = 0) {
+            const L = newL();
+            const CL = 6.06, CH = 2.59, CW = 2.44;
+            const PAD = .2, GAP = .14;
+            const y0 = PAD + GAP, yc = y0 + CH / 2, yt = y0 + CH;
+            const HX = CL / 2, HZ = CW / 2;
+            const put = (k, g) => { if (g) L[k].push(g); };
+
+            L.soft.push(boxAt(CL + 1.2, PAD, CW + .7, 0, PAD / 2, 0));
+            [-1, 1].forEach(sz => L.pipeB.push(boxAt(CL - .2, GAP, .32, 0, PAD + GAP / 2, sz * (HZ - .34))));
+            L.base.push(rboxAt(CL - .07, CH - .1, CW - .07, 0, yc, 0, .07));
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz => [y0 + .12, yt - .12].forEach(cy =>
+                L.mid.push(boxAt(.27, .23, .21, sx * (HX - .07), cy, sz * (HZ - .06))))));
+            [-1, 1].forEach(sz => L.mid.push(boxAt(CL - .44, .15, .12, 0, yt - .08, sz * (HZ + .01))));
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.mid.push(boxAt(.16, CH - .5, .16, sx * (HX - .09), yc, sz * (HZ - .08)))));
+            for (let i = 1; i < 6; i++) {
+                const x = -HX + .35 + i * (CL - .7) / 6;
+                [-1, 1].forEach(sz => L.deep.push(boxAt(.035, CH - .62, .04, x, yc, sz * (HZ + .015))));
+            }
+            [-1, 1].forEach(sz => L.pipeB.push(boxAt(CL - .7, .06, .03, 0, y0 + CH * .84, sz * (HZ + .022))));
+            L.deep.push(boxAt(.42, .62, .04, HX - .75, yc + .1, HZ + .03));
+            [0, 1, 2].forEach(k => L.pipeB.push(boxAt(.07, .07, .05, HX - .88 + k * .13, y0 + CH * .38, HZ + .04)));
+            L.deep.push(boxAt(.05, CH - .5, .06, HX + .02, yc, 0));
+            const dw = (CW - .34) / 2;
+            [-1, 1].forEach(s => {
+                const cz2 = s * (dw / 2 + .05);
+                L.mid.push(boxAt(.06, CH - .5, dw, HX + .04, yc, cz2));
+                [-.25, .25].forEach(u =>
+                    put('mid', strut(V(HX + .12, y0 + .2, cz2 + u * dw), V(HX + .12, yt - .2, cz2 + u * dw), .04, 6)));
+                L.mid.push(boxAt(.1, .09, .4, HX + .15, y0 + CH * .45, cz2));
+            });
+            L.mid.push(boxAt(.08, .13, CW - .24, HX + .04, yt - .1, 0));
+            L.mid.push(boxAt(.08, .13, CW - .24, HX + .04, y0 + .1, 0));
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.pipeB.push(boxAt(.5, .1, .12, sx * (HX - .45), yt - .04, sz * (HZ + .02)))));
+            /* 車頂：浪板／走道／收邊全部畫在屋頂貼圖上（roof 桶），
+               只留一片薄板承載，幾何量大幅下降、讀起來更乾淨 */
+            ROOF_TILES.push({ w: CL - .12, d: CW - .12, x: px, z: pz, y: yt + .05, ry });
+            /* 空調機組：底座＋機殼＋格柵＋頂蓋（層次拉開） */
+            L.mid.push(boxAt(1.28, .06, 1.05, -HX + 1.2, yt + .05, -CW * .13));
+            L.base.push(boxAt(1.15, .3, .92, -HX + 1.2, yt + .1, -CW * .13));
+            L.deep.push(boxAt(.98, .12, .74, -HX + 1.2, yt + .3, -CW * .13));
+            L.mid.push(boxAt(1.2, .04, .98, -HX + 1.2, yt + .42, -CW * .13));
+            L.pipeB.push(boxAt(.2, .18, .2, HX - .5, yt + .09, -CW * .24));
+            L.soft.push(boxAt(.08, CH - .3, CW - .3, -HX - .05, yc, 0));
+            [-1, 1].forEach(szn => [.78, .5, .22].forEach(fy => {
+                const fz = szn * CW * .22, fyy = y0 + CH * fy;
+                const ring = new THREE.CylinderGeometry(.36, .36, .1, 14);
+                ring.rotateZ(Math.PI / 2); ring.translate(-HX - .1, fyy, fz);
+                L.mid.push(ring);
+                const grille = new THREE.CylinderGeometry(.3, .3, .05, 14);
+                grille.rotateZ(Math.PI / 2); grille.translate(-HX - .14, fyy, fz);
+                L.deep.push(grille);
+                const hub = new THREE.CylinderGeometry(.08, .08, .07, 8);
+                hub.rotateZ(Math.PI / 2); hub.translate(-HX - .16, fyy, fz);
+                L.soft.push(hub);
+            }));
+            L.deep.push(boxAt(.05, .22, CW - .6, -HX - .1, y0 + .18, 0));
+            L.deep.push(boxAt(.04, .3, .3, -HX - .11, y0 + CH * .88, CW * .3));
+            L.soft.push(boxAt(.24, .5, .5, -HX - .15, y0 + .5, CW * .3));
+            put('pipeB', strut(V(-HX - .15, y0 + .25, CW * .3), V(-HX - .15, PAD * .4, CW * .3), .04, 6));
+            commitL(L, px, pz, ry);
+        }
+
+        /* ── PCS／配電櫃（正面對開門朝 +Z）──────────────────── */
+        function cCab(px, pz, ry = 0) {
+            const L = newL();
+            const W = 2.2, H = 2.25, D = 1.05;
+            const FT = .09, BS = .22;
+            const y0 = FT + BS, yc = y0 + H / 2, yt = y0 + H;
+            const FZ = D / 2;
+            const put = (k, g) => { if (g) L[k].push(g); };
+            const louver = (k, w, h, n, tilt, x, y, z, axis = 'z') => {
+                const step = h / n;
+                for (let i = 0; i < n; i++) {
+                    const b = axis === 'z'
+                        ? new THREE.BoxGeometry(w, step * .66, .07)
+                        : new THREE.BoxGeometry(.07, step * .66, w);
+                    if (axis === 'z') b.rotateX(tilt); else b.rotateZ(tilt);
+                    b.translate(x, y - h / 2 + step * (i + .5), z);
+                    L[k].push(b);
+                }
+            };
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.mid.push(new THREE.CylinderGeometry(.07, .09, FT, 8)
+                    .translate(sx * (W / 2 - .2), FT / 2, sz * (D / 2 - .18)))));
+            L.mid.push(boxAt(W + .1, BS * .62, D + .08, 0, FT + BS * .69, 0));
+            L.deep.push(boxAt(W - .16, BS * .42, D - .16, 0, FT + BS * .21, 0));
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.mid.push(boxAt(.11, .05, .11, sx * (W / 2 - .16), FT + BS, sz * (D / 2 - .14)))));
+            L.base.push(rboxAt(W, H, D, 0, yc, 0, .05));
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.mid.push(boxAt(.07, H - .04, .07, sx * (W / 2 - .02), yc, sz * (D / 2 - .02)))));
+            [y0 + .05, yt - .05].forEach(cy => [-1, 1].forEach(sz =>
+                L.mid.push(boxAt(W - .1, .08, .05, 0, cy, sz * (D / 2 + .015)))));
+            [-1, 1].forEach(sx => [-.28, .28].forEach(fz =>
+                L.mid.push(boxAt(.05, H - .3, .09, sx * (W / 2 + .02), yc, fz))));
+            const leaf = (W - .16) / 2;
+            [-1, 1].forEach(s => {
+                const cx = s * (leaf / 2 + .04);
+                L.mid.push(boxAt(leaf, H - .26, .06, cx, yc + .04, FZ + .03));
+                [.26, .5, .74].forEach(f =>
+                    L.deep.push(boxAt(leaf - .2, H * .18, .03, cx, y0 + H * f, FZ + .055)));
+                [.38, .62].forEach(f =>
+                    L.mid.push(boxAt(leaf - .14, .05, .04, cx, y0 + H * f, FZ + .06)));
+                [.2, .5, .8].forEach(f =>
+                    L.mid.push(boxAt(.07, .18, .12, s * (W / 2 - .05), y0 + H * f, FZ + .035)));
+                L.mid.push(boxAt(.06, .58, .13, s * .14, yc + .04, FZ + .1));
+                [-1, 1].forEach(k => L.mid.push(boxAt(.06, .07, .1, s * .14, yc + .04 + k * .32, FZ + .07)));
+                L.deep.push(boxAt(leaf - .12, .05, .05, cx, y0 + .08, FZ + .05));
+            });
+            L.deep.push(boxAt(.04, H - .26, .04, 0, yc + .04, FZ + .055));
+            [-1, 1].forEach(s => louver('deep', leaf - .26, .66, 12, -.5, s * (leaf / 2 + .04), y0 + .46, FZ + .05));
+            [-1, 1].forEach(s => louver('deep', D * .6, 1.0, 18, s * -.5, s * (W / 2 + .03), yc + .3, 0, 'x'));
+            [-1, 1].forEach(s => louver('deep', leaf - .3, .86, 16, .5, s * (leaf / 2 + .04), y0 + H * .72, -FZ - .03));
+            L.mid.push(boxAt(W - .2, .06, .05, 0, y0 + H * .72 + .48, -FZ - .04));
+            L.mid.push(boxAt(W - .2, .06, .05, 0, y0 + H * .72 - .48, -FZ - .04));
+            const pcx = -leaf / 2 - .04;
+            L.mid.push(boxAt(.46, .38, .06, pcx, y0 + H * .8, FZ + .07));
+            L.deep.push(boxAt(.34, .26, .03, pcx, y0 + H * .81, FZ + .1));
+            for (let i = 0; i < 5; i++)
+                L.mid.push(boxAt(.05, .05, .04, pcx - .18 + i * .09, y0 + H * .71, FZ + .09));
+            for (let i = 0; i < 3; i++)
+                L.mid.push(new THREE.CylinderGeometry(.035, .035, .05, 8).rotateX(Math.PI / 2)
+                    .translate(pcx - .1 + i * .1, y0 + H * .66, FZ + .09));
+            L.edge.push(new THREE.CylinderGeometry(.06, .06, .06, 10).rotateX(Math.PI / 2)
+                .translate(pcx + .17, y0 + H * .66, FZ + .1));                          // 急停（橘）
+            L.soft.push(boxAt(W - .3, .28, D - .3, 0, yt + .24, 0));
+            [-1, 1].forEach(s => louver('deep', D - .44, .18, 4, s * -.5, s * (W / 2 - .17), yt + .24, 0, 'x'));
+            L.mid.push(boxAt(W + .18, .07, D + .18, 0, yt + .035, 0));
+            L.mid.push(boxAt(W - .34, .05, D - .34, 0, yt + .4, 0));
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.mid.push(boxAt(.16, .11, .06, sx * (W / 2 - .42), yt + .12, sz * (D / 2 - .26)))));
+            L.mid.push(boxAt(.9, .66, .07, 0, y0 + .55, -FZ - .035));
+            L.deep.push(boxAt(.7, .48, .03, 0, y0 + .55, -FZ - .075));
+            for (let i = 0; i < 3; i++) {
+                const cx = -.26 + i * .26;
+                L.mid.push(boxAt(.14, .14, .05, cx, y0 + .55, -FZ - .09));
+                put('edge', strut(V(cx, y0 + .5, -FZ - .13), V(cx, FT, -FZ - .13), .06, 8));
+                L.edge.push(boxAt(.14, .09, .2, cx, FT, -FZ - .2));
+            }
+            L.mid.push(boxAt(.11, .11, .07, W / 2 - .2, y0 + .14, FZ + .04));
+            put('edge', strut(V(W / 2 - .2, y0 + .1, FZ + .07), V(W / 2 - .1, FT * .4, FZ + .22), .035, 6));
+            L.soft.push(boxAt(.34, .2, .04, leaf / 2 + .1, y0 + H * .93, FZ + .05));
+            L.deep.push(boxAt(.22, .22, .03, -leaf / 2 - .04, y0 + H * .32, FZ + .075));
+            for (let i = 0; i < 6; i++)
+                L.edge.push(boxAt(1.7, .06, .14, 0, .04, FZ + .24 + i * .16));
+            [-1, 1].forEach(sx => L.mid.push(boxAt(.07, .07, .96, sx * .88, .04, FZ + .64)));
+            commitL(L, px, pz, ry);
+        }
+
+        /* ── 油浸變壓器（高壓 −Z、低壓 +Z、控制箱 +X）────────── */
+        function cTrafo(px, pz, ry = 0, s = 1) {
+            const L = newL();
+            const TW = 2.3, TH = 1.55, TD = 1.4;
+            const yb = .3, yc = yb + TH / 2, yt = yb + TH;
+            const put = (k, g) => { if (g) L[k].push(g); };
+            const louver = (k, w, h, n, tilt, x, y, z) => {
+                const step = h / n;
+                for (let i = 0; i < n; i++) {
+                    const b = new THREE.BoxGeometry(.06, step * .66, w);
+                    b.rotateZ(tilt);
+                    b.translate(x, y - h / 2 + step * (i + .5), z);
+                    L[k].push(b);
+                }
+            };
+            L.soft.push(boxAt(3.3, .16, 2.5, 0, .08, 0));
+            [-1, 1].forEach(sz => L.mid.push(boxAt(2.9, .15, .26, 0, .235, sz * .72)));
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.edge.push(boxAt(.22, .1, .3, sx * 1.2, .21, sz * .72))));
+            L.base.push(rboxAt(TW, TH, TD, 0, yc, 0, .09));
+            L.mid.push(boxAt(TW + .14, .08, TD + .14, 0, yt + .04, 0));
+            for (let i = 0; i < 7; i++) {
+                const x = -TW / 2 + .12 + i * (TW - .24) / 6;
+                [-1, 1].forEach(sz => L.mid.push(boxAt(.08, .06, .08, x, yt + .1, sz * (TD / 2 + .04))));
+            }
+            for (let i = 0; i < 4; i++) {
+                const z = -TD / 2 + .16 + i * (TD - .32) / 3;
+                [-1, 1].forEach(sx => L.mid.push(boxAt(.08, .06, .08, sx * (TW / 2 + .04), yt + .1, z)));
+            }
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.mid.push(boxAt(.18, .13, .07, sx * (TW / 2 - .3), yt + .14, sz * (TD / 2 - .12)))));
+            [-1, 1].forEach(sz => {
+                const rz = sz * (TD / 2 + .3);
+                for (let i = 0; i < 14; i++)
+                    L.deep.push(boxAt(.1, 1.12, .42, -.85 + i * 1.7 / 13, yc + .02, rz));
+                [yc + .57, yc - .57].forEach(hy => {
+                    put('mid', strut(V(-1, hy, rz), V(1, hy, rz), .07, 8));
+                    [-1, 1].forEach(sx => put('mid', strut(
+                        V(sx, hy, rz), V(sx * .92, hy, sz * (TD / 2 - .12)), .065, 8)));
+                });
+            });
+            for (let i = 0; i < 3; i++) {
+                const bx = -.55 + i * .55, bz = -.34, ty = yt + .08;
+                L.mid.push(new THREE.CylinderGeometry(.14, .17, .1, 14).translate(bx, ty + .05, bz));
+                L.edge.push(new THREE.CylinderGeometry(.05, .05, .8, 10).translate(bx, ty + .5, bz));
+                for (let k = 0; k < 5; k++) {
+                    const r = .17 - k * .014;
+                    L.base.push(new THREE.CylinderGeometry(r, r, .05, 14).translate(bx, ty + .2 + k * .15, bz));
+                }
+                L.mid.push(new THREE.CylinderGeometry(.075, .1, .13, 12).translate(bx, ty + .96, bz));
+                L.mid.push(boxAt(.2, .05, .11, bx, ty + 1.05, bz));
+            }
+            for (let i = 0; i < 4; i++) {
+                const bx = -.66 + i * .44, bz = .4, ty = yt + .06;
+                L.mid.push(new THREE.CylinderGeometry(.11, .14, .08, 12).translate(bx, ty + .04, bz));
+                L.edge.push(new THREE.CylinderGeometry(.04, .04, .46, 10).translate(bx, ty + .28, bz));
+                for (let k = 0; k < 3; k++)
+                    L.base.push(new THREE.CylinderGeometry(.12, .12, .04, 12).translate(bx, ty + .14 + k * .12, bz));
+                L.mid.push(new THREE.CylinderGeometry(.06, .08, .1, 12).translate(bx, ty + .55, bz));
+                L.mid.push(boxAt(.16, .04, .09, bx, ty + .62, bz));
+            }
+            const cy = yt + .62, cz2 = -TD / 2 - .18;
+            const drum = new THREE.CylinderGeometry(.3, .3, 1.5, 16);
+            drum.rotateZ(Math.PI / 2);
+            drum.translate(-.15, cy, cz2);
+            L.soft.push(drum);
+            [-1, 1].forEach(sx => {
+                const cap = new THREE.SphereGeometry(.3, 14, 7, 0, Math.PI * 2, 0, Math.PI / 2);
+                cap.rotateZ(sx * -Math.PI / 2);
+                cap.translate(-.15 + sx * .75, cy, cz2);
+                L.soft.push(cap);
+                L.mid.push(boxAt(.14, .52, .3, -.15 + sx * .55, cy - .42, cz2));
+            });
+            L.mid.push(new THREE.CylinderGeometry(.12, .12, .06, 12).rotateZ(Math.PI / 2)
+                .translate(.86, cy, cz2));
+            put('edge', strut(V(-.15, cy - .3, cz2), V(-.15, yt + .06, cz2 + .3), .06, 8));
+            L.mid.push(new THREE.CylinderGeometry(.13, .13, .2, 12).translate(-.15, cy - .42, cz2 + .12));
+            L.mid.push(new THREE.CylinderGeometry(.09, .09, .55, 10).translate(-1.05, cy - .45, cz2));
+            L.soft.push(new THREE.CylinderGeometry(.13, .1, .16, 12).translate(-1.05, cy - .78, cz2));
+            const kx = TW / 2 + .22;
+            L.mid.push(boxAt(.4, .95, .7, kx, .95, .2));
+            L.deep.push(boxAt(.06, .8, .58, kx + .2, .95, .2));
+            louver('deep', .5, .28, 5, -.5, kx + .23, 1.28, .2);
+            L.mid.push(boxAt(.05, .22, .06, kx + .24, .9, .44));
+            [.2, .5, .8].forEach(f => L.mid.push(boxAt(.06, .12, .07, kx + .19, .55 + .8 * f, -.06)));
+            L.mid.push(boxAt(.44, .06, .74, kx, 1.45, .2));
+            [-1, 1].forEach(sz => put('edge', strut(
+                V(TW / 2 - .02, .55, .2 + sz * .28), V(kx + .1, .5, .2 + sz * .28), .04, 6)));
+            [-1.02, 1.02].forEach(vx => {
+                L.mid.push(new THREE.CylinderGeometry(.07, .07, .22, 10).rotateX(Math.PI / 2)
+                    .translate(vx, .62, TD / 2 + .12));
+                L.mid.push(boxAt(.16, .16, .06, vx, .62, TD / 2 + .24));
+            });
+            L.mid.push(new THREE.CylinderGeometry(.13, .13, .07, 14).rotateX(Math.PI / 2)
+                .translate(-1.02, yc + .35, TD / 2 + .06));
+            L.deep.push(new THREE.CylinderGeometry(.09, .09, .03, 12).rotateX(Math.PI / 2)
+                .translate(-1.02, yc + .35, TD / 2 + .11));
+            L.soft.push(boxAt(.46, .3, .04, .3, yc - .3, TD / 2 + .03));
+            L.mid.push(new THREE.CylinderGeometry(.11, .11, .16, 12).translate(.8, yt + .16, 0));
+            L.soft.push(new THREE.CylinderGeometry(.15, .12, .07, 12).translate(.8, yt + .27, 0));
+            [-1, 1].forEach(sx => put('edge', strut(
+                V(sx * (TW / 2 - .02), yb + .12, TD / 2 - .1),
+                V(sx * (TW / 2 + .06), .16, TD / 2 + .12), .045, 6)));
+            if (s !== 1) {
+                const ms = new THREE.Matrix4().makeScale(s, s, s);
+                for (const k in L) L[k].forEach(g => g.applyMatrix4(ms));
+            }
+            commitL(L, px, pz, ry);
+        }
+
+        /* ── 開放式框架櫃、電纜橋架、防撞柱 ─────────────────── */
+        function cSkidFrame(px, pz, ry = 0) {
+            const L = newL();
+            const FL = 6.3, FH = 2.7, FW = 2.5;
+            L.soft.push(boxAt(FL + .9, .18, FW + .6, 0, .09, 0));
+            L.edge.push(boxAt(FL, .16, FW, 0, .26, 0));
+            [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sx, sz]) =>
+                L.mid.push(boxAt(.16, FH, .16, sx * (FL / 2 - .08), .34 + FH / 2, sz * (FW / 2 - .08))));
+            [-1, 1].forEach(sz => L.mid.push(boxAt(FL, .14, .12, 0, .34 + FH, sz * (FW / 2 - .06))));
+            [-1, 1].forEach(sx => L.mid.push(boxAt(.12, .14, FW, sx * (FL / 2 - .06), .34 + FH, 0)));
+            L.base.push(boxAt(FL + .1, .07, FW + .1, 0, .34 + FH + .1, 0));
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.edge.push(boxAt(.4, .1, .1, sx * (FL / 2 - .35), .3 + FH, sz * (FW / 2 + .02)))));
+            commitL(L, px, pz, ry);
+        }
+        function cTray(x0, x1, z, cx, cz) {
+            const L = newL();
+            const len = x1 - x0, mx = (x0 + x1) / 2;
+            L.mid.push(boxAt(len, .07, .45, mx, .6, z));
+            L.edge.push(boxAt(len - .1, .07, .32, mx, .66, z));
+            for (let x = x0; x <= x1 + .01; x += 3.4) L.mid.push(boxAt(.09, .6, .09, x, .3, z));
+            commitL(L, cx, cz, 0);
+        }
+        function bollard(ox, oz, cx, cz) {
+            const L = newL();
+            L.base.push(new THREE.CylinderGeometry(.09, .1, .8, 8).translate(ox, .4, oz));
+            L.edge.push(new THREE.CylinderGeometry(.095, .095, .12, 8).translate(ox, .62, oz));
+            commitL(L, cx, cz, 0);
+        }
+
+        /* ── 儲能場站（essCampus variant）：貨櫃—機電—貨櫃三排 ── */
+        function essCampus(cx, cz) {
+            B.base.push(boxAt(21, .02, .3, cx, .012, cz - 10.2));
+            B.base.push(boxAt(21, .02, .3, cx, .012, cz + 10.2));
+            [-7, 0, 7].forEach(gx => {
+                cContainer(cx + gx, cz - 7);
+                cContainer(cx + gx, cz + 7);
+                cSkidFrame(cx + gx + .1, cz);
+                cTrafo(cx + gx - 1.6, cz, 0, .8);
+                cCab(cx + gx + 1.6, cz);
+            });
+            cTray(-10, 10, -3.6, cx, cz);
+            cTray(-10, 10, 3.6, cx, cz);
+            [[-10, -10], [10, -10], [-10, 10], [10, 10], [-2.2, 11.2], [2.2, 11.2]]
+                .forEach(([ox, oz]) => bollard(ox, oz, cx, cz));
+        }
+
+        /* ── 變電站：門型架＋礙子串＋主變 ×2＋防火牆＋控制室 ── */
+        function substation(cx, cz) {
+            const gx = cx - 6, beamY = 8;
+            [-7.5, 7.5].forEach(gz => {
+                [-1.2, 1.2].forEach(dx => B.mid.push(xg(strut(V(0, 0, 0), V(0, beamY, 0), .12), gx + dx, 0, cz + gz)));
+                B.mid.push(xg(strut(V(-1.2, beamY * .55, 0), V(1.2, beamY, 0), .06), gx, 0, cz + gz));
+                B.mid.push(xg(strut(V(1.2, beamY * .55, 0), V(-1.2, beamY, 0), .06), gx, 0, cz + gz));
+            });
+            B.mid.push(xg(strut(V(0, 0, -7.5), V(0, 0, 7.5), .1), gx, beamY, cz));
+            /* 變電站專用碎石場地（實際變電站的標準鋪面） */
+            B.gravel.push(boxAt(21.6, .04, 21.6, cx, .038, cz));
+            cTrafo(cx + 2, cz - 4.5, 0, 1.3);
+            cTrafo(cx + 2, cz + 4.5, 0, 1.3);
+            /* 防火牆：基座＋牆體＋壓頂 */
+            B.soft.push(boxAt(4.8, .25, .9, cx + 2, .125, cz));
+            B.base.push(boxAt(4.2, 3, .35, cx + 2, 1.75, cz));
+            B.mid.push(boxAt(4.4, .14, .5, cx + 2, 3.3, cz));
+            [-4.5, 4.5].forEach(gz => {
+                for (let k = 0; k < 4; k++)
+                    B.deep.push(new THREE.CylinderGeometry(.14, .14, .06, 8).translate(gx, beamY - .3 - k * .18, cz + gz));
+                B.edge.push(new THREE.TubeGeometry(
+                    catenary(V(gx, beamY - 1, cz + gz), V(cx + 1.3, 3.7, cz + gz - .4), .16, 12),
+                    12, .035, 4, false));
+                /* 三相匯流排支撐：3 支立柱＋頂端礙子＋橫向匯流管 */
+                for (let p = -1; p <= 1; p++) {
+                    const bx2 = cx - 2, bz2 = cz + gz + p * 1.1;
+                    B.mid.push(new THREE.CylinderGeometry(.07, .09, 2.6, 8).translate(bx2, 1.3, bz2));
+                    B.deep.push(new THREE.CylinderGeometry(.12, .12, .3, 8).translate(bx2, 2.75, bz2));
+                }
+                B.edge.push(new THREE.TubeGeometry(
+                    catenary(V(cx - 2, 2.95, cz + gz - 1.1), V(cx - 2, 2.95, cz + gz + 1.1), .02, 6),
+                    8, .03, 4, false));
+            });
+            B.base.push(boxAt(5, 3, 3.6, cx + 7, 1.5, cz + 7.5));
+            B.mid.push(boxAt(5.3, .25, 3.9, cx + 7, 3.1, cz + 7.5));
+            B.deep.push(boxAt(1, 1.9, .06, cx + 7, .95, cz + 9.34));
+            [-1.6, 1.6].forEach(ox => B.deep.push(boxAt(1.1, .9, .06, cx + 7 + ox, 1.9, cz + 9.34)));
+            /* 專用圍籬（含鏈網），西側留設備進出閘口 */
+            fenceRun(cx - 10.8, cz - 10.8, cx + 10.8, cz - 10.8);
+            fenceRun(cx + 10.8, cz - 10.8, cx + 10.8, cz + 10.8);
+            fenceRun(cx + 10.8, cz + 10.8, cx - 10.8, cz + 10.8);
+            fenceRun(cx - 10.8, cz + 10.8, cx - 10.8, cz + 2.2);
+            fenceRun(cx - 10.8, cz - 2.2, cx - 10.8, cz - 10.8);
+        }
+
+        /* ── 輸電鐵塔（回傳掛線點）─────────────────────────── */
+        function pylon(px, pz, h = 30, py = 0) {
+            const G = [];
+            const baseW = 7, waist = .34;
+            const half = t => t < .6
+                ? baseW / 2 * (1 - (1 - waist) * Math.pow(t / .6, .85))
+                : baseW / 2 * waist * (1 - (t - .6) * .3);
+            const corner = (t, i) => {
+                const w2 = half(t), sx = i < 2 ? 1 : -1, sz = (i % 2) ? 1 : -1;
+                return V(sx * w2, t * h, sz * w2);
+            };
+            const bays = 6;
+            for (let b = 0; b < bays; b++) {
+                const t0 = b / bays, t1 = (b + 1) / bays, r = .1 - .045 * t0;
+                for (let i = 0; i < 4; i++) {
+                    G.push(strut(corner(t0, i), corner(t1, i), r));
+                    const j = [1, 3, 0, 2][i];
+                    G.push(strut(corner(t1, i), corner(t1, j), r * .6));
+                    G.push(strut(corner(t0, i), corner(t1, j), r * .5));
+                    G.push(strut(corner(t0, j), corner(t1, i), r * .45));   // 反向斜撐＝X 交叉
+                }
+            }
+            const tips = [];
+            [.72, .88].forEach((ty, k) => {
+                const y = ty * h, hw = half(ty), len = k ? 4.2 : 5.4;
+                [-1, 1].forEach(s => {
+                    G.push(strut(V(s * hw, y, -hw), V(s * len, y + .2, 0), .07));
+                    G.push(strut(V(s * hw, y, hw), V(s * len, y + .2, 0), .07));
+                    G.push(strut(V(s * hw * .5, y + 1.9, 0), V(s * len, y + .2, 0), .05));
+                    /* 礙子串：4 片瓷裙＋吊桿，導線改掛在礙子串底端 */
+                    for (let q = 0; q < 4; q++)
+                        G.push(new THREE.CylinderGeometry(.2, .2, .06, 10).translate(s * len, y - .08 - q * .24, 0));
+                    G.push(new THREE.CylinderGeometry(.045, .045, 1.05, 8).translate(s * len, y - .5, 0));
+                    tips.push(V(px + s * len, py + y - 1.08, pz));
+                });
+            });
+            const peak = V(0, h + 1.9, 0);
+            for (let i = 0; i < 4; i++) G.push(strut(corner(1, i), peak, .05));
+            for (let i = 0; i < 4; i++) {
+                const c = corner(0, i);
+                G.push(boxAt(1.2, .5, 1.2, c.x, .25, c.z));
+            }
+            G.forEach(g => { if (g) { g.translate(px, py, pz); B.mid.push(g); } });
+            B.edge.push(boxAt(.36, .36, .36, px, py + h + 2.1, pz));   // 塔頂航空警示標
+            return tips;
+        }
+
+        /* ── 戶外儲能小櫃（家用/商用 wall unit）───────────────── */
+        function packUnit(cx, cz, y, ry = 0) {
+            const L = newL();
+            L.soft.push(boxAt(1.1, .12, .7, 0, .06, 0));
+            L.base.push(rboxAt(.95, 1.35, .5, 0, .8, 0, .05));
+            L.deep.push(boxAt(.8, .95, .05, 0, .85, .26));
+            L.mid.push(boxAt(1, .08, .55, 0, 1.51, 0));
+            for (let k = 0; k < 3; k++) L.deep.push(boxAt(.7, .05, .04, 0, .35 + k * .12, .27));
+            commitL(L, cx, cz, ry, y);
+        }
+
+        // 綠色植栽三型（有機化：位置雜湊置換讓樹冠不再是正幾何）
+        function tree(x, z, s = 1) {
+            const kind = rng();
+            B.trunk.push(new THREE.CylinderGeometry(.06 * s, .11 * s, .6 * s, 7).translate(x, .3 * s, z));
+            if (kind < .45) {
+                B.leaf.push(ruffle(new THREE.ConeGeometry(.55 * s, 1.6 * s, 11, 3), .22).translate(x, 1.3 * s, z));
+                B.leaf.push(ruffle(new THREE.ConeGeometry(.4 * s, 1.1 * s, 11, 3), .22).translate(x, 2.05 * s, z));
+                B.leaf.push(ruffle(new THREE.ConeGeometry(.24 * s, .7 * s, 10, 2), .2).translate(x, 2.65 * s, z));
+            } else if (kind < .78) {
+                B.leaf2.push(ruffle(new THREE.SphereGeometry(.62 * s, 12, 10), .26).translate(x, 1.05 * s, z));
+                B.leaf2.push(ruffle(new THREE.SphereGeometry(.4 * s, 10, 8), .26).translate(x + .34 * s, 1.4 * s, z + .16 * s));
+            } else {
+                B.leaf.push(ruffle(new THREE.SphereGeometry(.45 * s, 10, 8), .3).translate(x, .5 * s, z));
+            }
+        }
+        // 灌木叢帶：沿線一排小球（圍籬邊的綠籬）
+        function hedge(x0, z0, x1, z1, n = 8, s = .55) {
+            for (let i = 0; i <= n; i++) {
+                const t = i / n;
+                const x = x0 + (x1 - x0) * t + rand(-.3, .3);
+                const z = z0 + (z1 - z0) * t + rand(-.3, .3);
+                (rng() < .5 ? B.leaf : B.leaf2).push(
+                    ruffle(new THREE.SphereGeometry(s * rand(.8, 1.2), 9, 7), .3).translate(x, .42, z));
+            }
+        }
+
+        /* ── 風力發電機（葉片獨立 mesh，主迴圈慢轉）───────── */
+        const ROTORS = [];
+        const OUTDOOR_ROOT = new THREE.Group();
+        scene.add(OUTDOOR_ROOT);
+        /* 風機轉子/葉尖：帶鈑金與管件貼圖（有說明的物件都要有材質） */
+        // 葉片與葉尖各自一張（原本分別跟建築牆、通用管件共用，改不動）
+        const MAT_ROTOR = clipNormal(new THREE.MeshStandardMaterial({ color: CLAY.base, roughness: .8, metalness: .06, map: TEX.blade }));
+        const MAT_TIP = clipNormal(new THREE.MeshStandardMaterial({ color: CLAY.edge, roughness: .5, metalness: .1, map: TEX.bladeTip }));
+        function turbine(px, pz, hubH = 21, rotorR = 8, ry = .55, py = 0) {
+            /* 基礎：兩階圓形混凝土座＋螺栓法蘭環 */
+            B.soft.push(new THREE.CylinderGeometry(2.3, 2.6, .55, 18).translate(px, py + .28, pz));
+            B.mid.push(new THREE.CylinderGeometry(1.2, 1.2, .16, 16).translate(px, py + .62, pz));
+            /* 塔身：漸縮圓管＋接段法蘭環 ×3＋塔底門 */
+            B.base.push(new THREE.CylinderGeometry(.6, 1.08, hubH, 16).translate(px, py + hubH / 2 + .6, pz));
+            [.28, .55, .8].forEach(f => B.mid.push(new THREE.CylinderGeometry(
+                1.08 - .48 * f + .05, 1.08 - .48 * f + .05, .14, 16).translate(px, py + .6 + hubH * f, pz)));
+            const dir = V(Math.sin(ry), 0, Math.cos(ry));
+            const door = new THREE.BoxGeometry(.55, 1.2, .16);
+            door.rotateY(ry);
+            door.translate(px + dir.x * 1, py + 1.35, pz + dir.z * 1);
+            B.deep.push(door);
+            /* 機艙：導角殼＋尾端散熱格柵＋風速計 */
+            const nac = new RoundedBoxGeometry(3, 1.4, 1.4, 2, .2);
+            nac.rotateY(ry);
+            nac.translate(px, py + hubH + 1.15, pz);
+            B.soft.push(nac);
+            const vent = new THREE.BoxGeometry(.14, .85, .85);
+            vent.rotateY(ry);
+            vent.translate(px - dir.x * 1.56, py + hubH + 1.15, pz - dir.z * 1.56);
+            B.deep.push(vent);
+            B.mid.push(new THREE.CylinderGeometry(.03, .03, .8, 6).translate(px - dir.x * 1.05, py + hubH + 2.2, pz - dir.z * 1.05));
+            B.mid.push(boxAt(.36, .05, .05, px - dir.x * 1.05, py + hubH + 2.6, pz - dir.z * 1.05));
+            /* 轉子：整流罩（spinner）＋三葉（根管→漸縮葉身→橘色葉尖） */
+            const g = new THREE.Group();
+            g.position.set(px + dir.x * 1.62, py + hubH + 1.15, pz + dir.z * 1.62);
+            g.rotation.y = ry;
+            const parts = [], tips = [];
+            for (let i = 0; i < 3; i++) {
+                const rot = i * Math.PI * 2 / 3;
+                const root = new THREE.CylinderGeometry(.2, .27, rotorR * .16, 10);
+                root.translate(0, rotorR * .08 + .42, 0);
+                root.rotateZ(rot);
+                parts.push(root);
+                const blade = new THREE.CylinderGeometry(.05, .2, rotorR * .84, 8);
+                blade.translate(0, rotorR * .58 + .42, 0);
+                blade.scale(1, 1, .3);
+                blade.rotateZ(rot);
+                parts.push(blade);
+                const tip = new THREE.CylinderGeometry(.028, .06, rotorR * .16, 6);
+                tip.translate(0, rotorR * .95 + .42, 0);
+                tip.scale(1, 1, .3);
+                tip.rotateZ(rot);
+                tips.push(tip);
+            }
+            const spinner = new THREE.ConeGeometry(.5, 1, 12);
+            spinner.rotateX(Math.PI / 2);
+            spinner.translate(0, 0, .82);
+            parts.push(spinner);
+            parts.push(new THREE.CylinderGeometry(.5, .5, .7, 12).rotateX(Math.PI / 2));
+            const rotorGeo = mergeCompat(parts), tipGeo = mergeCompat(tips);
+            const rotor = new THREE.Mesh(rotorGeo, MAT_ROTOR);
+            rotor.castShadow = true;
+            rotor.add(new THREE.Mesh(tipGeo, MAT_TIP));
+            /* 轉子的線稿層：其他物件的線稿是建完後統一從幾何桶合併出來的，
+               但轉子會旋轉，線稿必須掛進同一個群組才會跟著轉 —— 所以在這裡自己配一份。
+               白底遮擋 ＋ 灰輪廓，材質與全場的 sketch 層共用（改線色會一起變）。 */
+            const rotorSketch = mergeCompat([rotorGeo.clone(), tipGeo.clone()]);
+            if (rotorSketch) {
+                const fill = new THREE.Mesh(rotorSketch, SKETCH_FILL);
+                fill.renderOrder = 1;
+                const lines = new THREE.LineSegments(new THREE.EdgesGeometry(rotorSketch, EDGE_DEG), SKETCH_LINE);
+                lines.renderOrder = 2;
+                rotor.add(fill, lines);
+            }
+            g.add(rotor);
+            OUTDOOR_ROOT.add(g);
+            ROTORS.push({ m: rotor, sp: rand(.4, .65), ph: rand(0, Math.PI * 2) });
+        }
+
+        /* ── 營運控制大樓：三層帶窗＋雨遮＋屋頂機電 ─────────── */
+        function officeBlock(cx, cz, ry = 0) {
+            const L = newL();
+            const W = 11, D = 7.5, F = 3, fh = 3.2;
+            L.soft.push(boxAt(W + 1.8, .12, D + 1.8, 0, .06, 0));
+            L.base.push(boxAt(W, F * fh, D, 0, F * fh / 2 + .12, 0));
+            for (let f = 0; f < F; f++) {
+                const y = .12 + f * fh + fh * .55;
+                L.deep.push(boxAt(W - 1, 1.35, .08, 0, y, D / 2 + .01));
+                L.deep.push(boxAt(W - 1, 1.35, .08, 0, y, -D / 2 - .01));
+                L.deep.push(boxAt(.08, 1.35, D - 1, W / 2 + .01, y, 0));
+                L.deep.push(boxAt(.08, 1.35, D - 1, -W / 2 - .01, y, 0));
+                for (let k = 0; k < 7; k++)
+                    L.mid.push(boxAt(.07, 1.42, .1, -W / 2 + 1 + k * (W - 2) / 6, y, D / 2 + .02));
+                L.mid.push(boxAt(W + .26, .2, D + .26, 0, .12 + (f + 1) * fh - .1, 0));
+            }
+            L.mid.push(boxAt(W + .5, .3, D + .5, 0, F * fh + .32, 0));
+            L.soft.push(boxAt(2.6, 1.1, 1.8, -W / 4, F * fh + .95, 0));
+            L.mid.push(boxAt(2.9, .12, 2, -W / 4, F * fh + 1.6, 0));
+            L.edge.push(boxAt(2.2, .5, .12, W / 4, F * fh + .62, D / 2 - .9));
+            L.deep.push(boxAt(2.6, 2.2, .1, 0, 1.25, D / 2 + .05));
+            L.soft.push(boxAt(3.6, .18, 1.6, 0, 2.6, D / 2 + .8));
+            [-1.7, 1.7].forEach(ox => L.mid.push(boxAt(.16, 2.4, .16, ox, 1.32, D / 2 + 1.3)));
+            commitL(L, cx, cz, ry);
+        }
+
+        /* ── 路燈：燈臂朝路、橘色燈頭 ───────────────────────── */
+        function lightPole(px, pz, ry = 0) {
+            const L = newL();
+            L.mid.push(boxAt(.5, .35, .5, 0, .17, 0));
+            L.mid.push(new THREE.CylinderGeometry(.06, .09, 5.4, 8).translate(0, 3, 0));
+            L.mid.push(boxAt(1.5, .08, .1, .65, 5.72, 0));
+            L.edge.push(boxAt(.55, .1, .22, 1.3, 5.66, 0));
+            commitL(L, px, pz, ry);
+        }
+
+        /* ── 場區地坪：淺色台地＋四角橘色角標（版面分區記號）── */
+        function zonePad(cx, cz, w, d) {
+            B.soft.push(boxAt(w, .07, d, cx, .035, cz));
+            [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sx, sz]) => {
+                B.edge.push(boxAt(1.3, .035, .16, cx + sx * (w / 2 - .8), .09, cz + sz * (d / 2 - .1)));
+                B.edge.push(boxAt(.16, .035, 1.3, cx + sx * (w / 2 - .1), .09, cz + sz * (d / 2 - .8)));
+            });
+        }
+
+        /* ── 橘色管線束：斜接偏移折線（轉角共點不裂）＋彎頭球
+              ＋端點落地立管與法蘭＋支撐短柱 ──────────────────── */
+        function pipeRun(pts, { n = 2, r = .12, y = .34, gap = .32, risers = true } = {}) {
+            const dirs = [];
+            for (let i = 0; i < pts.length - 1; i++) {
+                const dx = pts[i + 1][0] - pts[i][0], dz = pts[i + 1][1] - pts[i][1];
+                const l = Math.hypot(dx, dz) || 1;
+                dirs.push([dx / l, dz / l]);
+            }
+            const STRAND_BK = ['pipeW', 'pipeW', 'pipeW'];   // 電流傳輸管線：全白管束
+            for (let k = 0; k < n; k++) {
+                const bk = STRAND_BK[k % 3];
+                const off = (k - (n - 1) / 2) * gap;
+                // 斜接偏移：轉角用前後段平均方向的垂直向偏移，並做斜接長度補正
+                const op = pts.map((p, i) => {
+                    const dPrev = dirs[i - 1], dNext = dirs[i];
+                    let d = dNext || dPrev, scale = 1;
+                    if (dPrev && dNext) {
+                        let mx = dPrev[0] + dNext[0], mz = dPrev[1] + dNext[1];
+                        const l = Math.hypot(mx, mz);
+                        if (l > .001) {
+                            d = [mx / l, mz / l];
+                            scale = 1 / Math.max(.4, d[0] * dNext[0] + d[1] * dNext[1]);
+                        }
+                    }
+                    return [p[0] - d[1] * off * scale, p[1] + d[0] * off * scale];
+                });
+                for (let i = 0; i < op.length - 1; i++) {
+                    const a = V(op[i][0], y, op[i][1]), b = V(op[i + 1][0], y, op[i + 1][1]);
+                    const s = strut(a, b, r, 10);
+                    if (s) B[bk].push(s);
+                    if (i < op.length - 2)
+                        B[bk].push(new THREE.SphereGeometry(r * 1.14, 8, 8).translate(b.x, y, b.z));
+                }
+                if (risers) [op[0], op[op.length - 1]].forEach(p => {
+                    const s = strut(V(p[0], y, p[1]), V(p[0], .04, p[1]), r, 10);
+                    if (s) B[bk].push(s);
+                    B[bk].push(new THREE.SphereGeometry(r * 1.14, 8, 8).translate(p[0], y, p[1]));
+                    B.mid.push(new THREE.CylinderGeometry(r * 1.55, r * 1.55, .08, 10).translate(p[0], .06, p[1]));
+                });
+            }
+            // 支撐短柱沿中心線
+            for (let i = 0; i < pts.length - 1; i++) {
+                const [x0, z0] = pts[i], [x1, z1] = pts[i + 1];
+                const dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz);
+                const nSeg = Math.max(1, Math.floor(len / 2.6));
+                for (let q = 1; q < nSeg; q++) {
+                    const t = q / nSeg;
+                    B.mid.push(boxAt(.09, y - .06, .09, x0 + dx * t, (y - .06) / 2, z0 + dz * t));
+                }
+            }
+        }
+
+        /* ── 周界圍籬：立柱＋上下橫桿＋半透明網面 ───────────── */
+        const FENCE_PANELS = [];
+        function fenceRun(x0, z0, x1, z1) {
+            const dx = x1 - x0, dz = z1 - z0, len = Math.hypot(dx, dz);
+            const n = Math.max(1, Math.round(len / 2.6));
+            for (let i = 0; i <= n; i++)
+                B.mid.push(boxAt(.09, 1.5, .09, x0 + dx * i / n, .75, z0 + dz * i / n));
+            const th = Math.atan2(dz, dx);
+            [1.46, .1].forEach(ry => {
+                const rail = new THREE.BoxGeometry(len, .05, .05);
+                rail.rotateY(-th);
+                rail.translate((x0 + x1) / 2, ry, (z0 + z1) / 2);
+                B.mid.push(rail);
+            });
+            const mesh = new THREE.PlaneGeometry(len, 1.32);
+            mesh.rotateY(-th);
+            mesh.translate((x0 + x1) / 2, .78, (z0 + z1) / 2);
+            FENCE_PANELS.push(mesh);
+        }
+
+        /* ── 字樣貼板：CanvasTexture 深藍字，貼在白櫃側面 ──── */
+        const LABEL_MESHES = [];
+        function makeLabel(text, w, h, x, y, z, ry = 0, color = '#37877b') {
+            const cv = document.createElement('canvas');
+            cv.width = 512; cv.height = 128;
+            const ctx = cv.getContext('2d');
+            ctx.clearRect(0, 0, 512, 128);
+            ctx.fillStyle = color;
+            ctx.font = '700 44px "DM Sans", Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const lines = text.split('\n');
+            lines.forEach((ln, i) =>
+                ctx.fillText(ln, 256, 64 + (i - (lines.length - 1) / 2) * 50));
+            const tex = new THREE.CanvasTexture(cv);
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.anisotropy = 4;
+            const m = new THREE.Mesh(
+                new THREE.PlaneGeometry(w, h),
+                new THREE.MeshBasicMaterial({ map: tex, transparent: true }));
+            m.position.set(x, y, z);
+            m.rotation.y = ry;
+            LABEL_MESHES.push(m);
+        }
+
+        /* ── 黃色閃電貼紙（參考圖每櫃都有的標誌）──────────── */
+        let BOLT_TEX = null;
+        function boltSticker(x, y, z, ry = 0, s = .55) {
+            if (!BOLT_TEX) {
+                const cv = document.createElement('canvas');
+                cv.width = cv.height = 128;
+                const ctx = cv.getContext('2d');
+                ctx.fillStyle = '#f7c614';
+                ctx.beginPath();
+                ctx.roundRect(10, 10, 108, 108, 18);
+                ctx.fill();
+                ctx.fillStyle = '#1c2230';
+                ctx.beginPath();
+                ctx.moveTo(74, 22); ctx.lineTo(44, 70); ctx.lineTo(62, 70);
+                ctx.lineTo(52, 106); ctx.lineTo(88, 56); ctx.lineTo(68, 56);
+                ctx.closePath();
+                ctx.fill();
+                BOLT_TEX = new THREE.CanvasTexture(cv);
+                BOLT_TEX.colorSpace = THREE.SRGBColorSpace;
+                BOLT_TEX.anisotropy = 4;
+            }
+            const m = new THREE.Mesh(new THREE.PlaneGeometry(s, s),
+                new THREE.MeshBasicMaterial({ map: BOLT_TEX, transparent: true }));
+            m.position.set(x, y, z);
+            m.rotation.y = ry;
+            LABEL_MESHES.push(m);
+        }
+
+        /* ── PCS／EMS 長櫃：抬高台座＋白櫃＋立肋＋橘管進線 ─── */
+        function longUnit(cx, cz, len, ry = 0, opts = {}) {
+            const L = newL();
+            const H = 2.9, W = 2.6, h0 = .5;
+            L.soft.push(boxAt(len + 1.6, h0, W + 1.6, 0, h0 / 2, 0));            // 混凝土台座
+            L.deep.push(boxAt(len + 1.7, .07, W + 1.7, 0, h0 + .01, 0));
+            /* 台座前緣安全圍欄 */
+            for (let i = 0; i <= 8; i++)
+                L.mid.push(boxAt(.05, .92, .05, -len / 2 + i * len / 8, h0 + .46, W / 2 + .68));
+            L.mid.push(boxAt(len + .05, .05, .05, 0, h0 + .9, W / 2 + .68));
+            L.mid.push(boxAt(len + .05, .04, .04, 0, h0 + .5, W / 2 + .68));
+            L.base.push(rboxAt(len, H, W, 0, h0 + H / 2 + .12, 0, .08));
+            L.mid.push(boxAt(len + .12, .12, W + .12, 0, h0 + H + .18, 0));      // 頂沿
+            const nR = Math.round(len / .62);
+            for (let i = 0; i < nR; i++) {
+                const x = -len / 2 + (i + .5) * len / nR;
+                [-1, 1].forEach(sz => L.mid.push(boxAt(.05, H - .5, .04, x, h0 + H / 2 + .12, sz * (W / 2 + .01))));
+            }
+            [-1, 1].forEach(sx => [-1, 1].forEach(sz =>
+                L.mid.push(boxAt(.15, H + .06, .15, sx * (len / 2 - .05), h0 + H / 2 + .12, sz * (W / 2 - .05)))));
+            if (opts.stairs) {                                                   // 檢修樓梯
+                for (let k = 0; k < 3; k++)
+                    L.mid.push(boxAt(1.1, .12, .34, len / 2 + 1 - k * 0, h0 - .12 - k * .16, W / 2 - .8 + 0));
+                for (let k = 0; k < 3; k++)
+                    L.mid.push(boxAt(1.1, .12, .3, len / 2 + .6 + k * .3, .12 + k * .14, 0));
+            }
+            L.edge.push(boxAt(.9, .5, .4, -len / 2 + 1, h0 + .3, W / 2 + .25));  // 橘色進線箱
+            commitL(L, cx, cz, ry);
+        }
+
+        /* ── 控制室：單層白屋＋帶窗＋門斗＋台階＋屋頂機電 ──── */
+        function controlRoom(cx, cz, ry = 0) {
+            const L = newL();
+            const W = 9.5, D = 5.6, H = 3.4;
+            L.soft.push(boxAt(W + 1.8, .35, D + 1.8, 0, .175, 0));               // 台基
+            L.deep.push(boxAt(W + 1.9, .06, D + 1.9, 0, .03, 0));
+            L.base.push(rboxAt(W, H, D, 0, .35 + H / 2, 0, .07));
+            L.mid.push(boxAt(W + .4, .28, D + .4, 0, .35 + H + .1, 0));          // 簷口
+            L.deep.push(boxAt(W - 1.6, 1.35, .08, .6, .35 + H * .58, D / 2 + .01)); // 帶窗
+            for (let k = 0; k < 5; k++)
+                L.mid.push(boxAt(.07, 1.4, .1, -W / 2 + 2 + k * (W - 3) / 4, .35 + H * .58, D / 2 + .02));
+            L.deep.push(boxAt(.08, 1.35, D - 1.6, W / 2 + .01, .35 + H * .58, 0));
+            L.mid.push(boxAt(1.2, 2.3, .12, -W / 2 + 1.15, .35 + 1.15, D / 2 + .05)); // 門
+            L.soft.push(boxAt(2, .14, 1.2, -W / 2 + 1.15, .35 + 2.5, D / 2 + .6));   // 雨遮
+            for (let k = 0; k < 3; k++)                                          // 台階
+                L.mid.push(boxAt(1.7, .12, .4, -W / 2 + 1.15, .1 + k * .12, D / 2 + 1 + (2 - k) * .38));
+            L.soft.push(boxAt(1.9, .9, 1.3, W / 4, .35 + H + .6, -.6));          // 屋頂機電
+            L.mid.push(boxAt(2.1, .1, 1.5, W / 4, .35 + H + 1.1, -.6));
+            L.edge.push(boxAt(1.4, .4, .1, -W / 4, .35 + H + .4, -D / 2 + .8));  // 屋頂橘標識
+            commitL(L, cx, cz, ry);
+        }
+
+        /* ── 冷卻機組：大箱體＋頂部 2×3 風扇陣＋側百葉 ─────── */
+        function chillerSkid(cx, cz, ry = 0) {
+            const L = newL();
+            const W = 5.2, D = 3.2, H = 2.5;
+            L.soft.push(boxAt(W + 1, .3, D + 1, 0, .15, 0));
+            L.base.push(rboxAt(W, H, D, 0, .3 + H / 2, 0, .08));
+            [-1, 1].forEach(sz => {
+                for (let k = 0; k < 8; k++)
+                    L.deep.push(boxAt(.06, H - .8, .05, -W / 2 + .5 + k * (W - 1) / 7, .3 + H / 2, sz * (D / 2 + .01)));
+            });
+            L.mid.push(boxAt(W + .14, .12, D + .14, 0, .3 + H + .04, 0));
+            for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) {
+                const fx = -W / 2 + W / 6 + c * W / 3, fz = (r - .5) * (D / 2 - .2);
+                L.mid.push(new THREE.CylinderGeometry(.62, .62, .1, 16).translate(fx, .3 + H + .16, fz));
+                L.deep.push(new THREE.CylinderGeometry(.54, .54, .06, 16).translate(fx, .3 + H + .22, fz));
+                L.soft.push(new THREE.CylinderGeometry(.12, .12, .16, 8).translate(fx, .3 + H + .26, fz));
+            }
+            L.edge.push(boxAt(.7, .45, .35, W / 2 - .6, .3 + .35, D / 2 + .2));
+            commitL(L, cx, cz, ry);
+        }
+
+        // 圓角平台：Shape 圓角矩形擠出，比方盒優雅
+        function roundedSlab(w, d, r, h, y, bucket, target = B[bucket]) {
+            const s = new THREE.Shape();
+            const hw = w / 2, hd = d / 2;
+            s.moveTo(-hw + r, -hd);
+            s.lineTo(hw - r, -hd); s.absarc(hw - r, -hd + r, r, -Math.PI / 2, 0);
+            s.lineTo(hw, hd - r); s.absarc(hw - r, hd - r, r, 0, Math.PI / 2);
+            s.lineTo(-hw + r, hd); s.absarc(-hw + r, hd - r, r, Math.PI / 2, Math.PI);
+            s.lineTo(-hw, -hd + r); s.absarc(-hw + r, -hd + r, r, Math.PI, Math.PI * 1.5);
+            const g = new THREE.ExtrudeGeometry(s, { depth: h, bevelEnabled: false, curveSegments: 10 });
+            g.rotateX(-Math.PI / 2);
+            g.translate(0, y, 0);
+            target.push(g);
+        }
+
+        /* ══ 佈局：78×78 圓角平台島（照參考圖的密度與分區）═══ */
+        roundedSlab(78, 78, 6, 1.2, -1.2, 'soft', PLATFORM_GEOMETRIES.soft);       // 平台（圓角）
+        roundedSlab(80.4, 80.4, 6.8, .22, -1.32, 'mid', PLATFORM_GEOMETRIES.mid);   // 底階
+
+        /* 太陽能場（西北，深藍模組）—— 移到貨櫃陣列北側，兩區不再重疊 */
+        solarFarm(-26, -26, 3, 4);
+
+        /* 電池貨櫃陣列（中西）：3 列 × 5 排＋橘色閃電標＋碎石 */
+        B.gravel.push(boxAt(26, .04, 23, -5, .03, -7));   // 比太陽能場碎石高 1cm，交界不閃面
+        [-21, -13, -5, 3].forEach(px => [-16, -11.6, -7.2, -2.8, 1.6].forEach(pz => {
+            cContainer(px, pz);
+            boltSticker(px - 1.5, 1.62, pz + 1.3, 0, .62);   // 黃色閃電貼紙
+        }));
+        B.gravel.push(boxAt(8, .04, 23, -21, .034, -7));
+        /* 北緣貨櫃排＋碎石帶 */
+        [12, 20, 28].forEach(px => {
+            cContainer(px, -30);
+            boltSticker(px - 1.5, 1.62, -28.7, 0, .62);
+        });
+        B.gravel.push(boxAt(22, .04, 5.5, 20, .028, -30));
+
+        /* PCS / INVERTER 長櫃（北，抬高台座） */
+        longUnit(8, -22, 11);
+        makeLabel('PCS / INVERTER', 6.4, 1.6, 8, 2.55, -20.62, 0);
+        boltSticker(3.4, 2.55, -20.61, 0, .7);
+
+        /* 變電站（東北）＋ EMS 長櫃（東） */
+        substation(24, -8);
+        longUnit(30, 5, 8);
+        makeLabel('ENERGY MANAGEMENT\nSYSTEM', 6.2, 3.1, 30, 2.4, 6.38, 0);
+
+        /* 控制室（南前）＋大型變壓器＋PCS 櫃列 */
+        controlRoom(6, 20);
+        makeLabel('CONTROL ROOM', 4.6, 1.15, 4.6, 3.15, 22.86, 0);
+        cTrafo(16, 16, 0, 1.25);
+        B.gravel.push(boxAt(10, .04, 9, 16, .02, 16));
+        [10, 12.6, 15.2, 17.8].forEach(x => {
+            cCab(x, 10.5);
+            boltSticker(x + .55, 1.5, 11.2, 0, .48);
+        });
+        B.gravel.push(boxAt(11.5, .04, 5, 13.9, .035, 10.5));   // 與變壓器碎石錯高，交界不閃面
+
+        /* 冷卻機組（西南）＋戶外儲能櫃展示列 */
+        chillerSkid(-18, 22, .06);
+        [-30, -27.4, -24.8].forEach((x, i) => packUnit(x, 14, 0, .12 * (i - 1)));
+        B.soft.push(boxAt(9.4, .1, 3.2, -27.4, .05, 14.6));
+
+        /* 列間高架電纜橋架＋貨櫃爬梯＋走道板 */
+        cTray(-16.2, 6.2, -13.8, 0, 0);
+        cTray(-16.2, 6.2, -5, 0, 0);
+        [[-13, -16], [3, -7.2], [-5, 1.6]].forEach(([px, pz]) => {   // 三座貨櫃掛側爬梯
+            [-1, 1].forEach(s => B.mid.push(boxAt(.05, 2.5, .05, px + 2.6, 1.35, pz + s * .22)));
+            for (let k = 0; k < 6; k++)
+                B.mid.push(boxAt(.05, .05, .44, px + 2.6, .35 + k * .42, pz));
+        });
+        B.gravel.push(boxAt(11, .04, 24, -24.5, .026, 1));            // 西側碎石場
+
+        /* 橘色管線網：全部走列間走道，不穿設備 */
+        pipeRun([[-21.5, -.6], [3, -.6]], { n: 3, y: .3 });                // 貨櫃列間橫向幹管（含第四列）
+        pipeRun([[-9, -17.6], [-9, -22], [2.2, -22]], { n: 2 });           // 陣列西走道 → PCS 台座
+        pipeRun([[13.6, -22], [18, -22], [18, -15]], { n: 2 });            // PCS → 變電站門型架
+        pipeRun([[6.6, 8.5], [24, 8.5], [30, 8.5], [30, 6.7]], { n: 2, y: .42 });  // 南幹管 → EMS（墊高跨過交會）
+        pipeRun([[-1, 3.2], [-1, 8.5], [6, 8.5], [6, 16.6]], { n: 3 });    // 儲能東走道 → 控制室
+        pipeRun([[6, 12], [13.9, 12], [16, 12], [16, 13.6]], { n: 2, y: .3 });  // 支管 → 變壓器/櫃列
+        pipeRun([[-15.2, 22], [-9, 22], [-9, 3.4]], { n: 2 });             // 冷卻機組 → 陣列西走道
+
+        /* 周界圍籬（植栽拿掉，改補設備：備用櫃列、管材堆置、備品貨櫃）*/
+        fenceRun(-36.5, -36.5, 36.5, -36.5);
+        fenceRun(36.5, -36.5, 36.5, 36.5);
+        fenceRun(36.5, 36.5, -36.5, 36.5);
+        fenceRun(-36.5, 36.5, -36.5, -36.5);
+        // 西緣：備用 PCS 櫃列（面朝東）
+        [-6.5, -3.2, .1, 3.4].forEach(z => {
+            cCab(-33, z, Math.PI / 2);
+            boltSticker(-32.3, 1.5, z + .55, Math.PI / 2, .48);
+        });
+        B.gravel.push(boxAt(5, .04, 13.5, -33, .033, -1.5));
+        // 南緣：備品管材堆置區（橘／藍管三層堆＋枕木）
+        [[-1, 26.5], [4.6, 26.5]].forEach(([sx, sz]) => {
+            [-2.1, 0, 2.1].forEach(ox => B.mid.push(boxAt(.5, .28, 1.9, sx + ox, .14, sz)));
+            for (let row = 0; row < 3; row++) for (let i = 0; i < 4 - row; i++) {
+                const g = new THREE.CylinderGeometry(.2, .2, 5.6, 10);
+                g.rotateZ(Math.PI / 2);
+                g.translate(sx, .5 + row * .35, sz - .7 + i * .44 + row * .22);
+                (row === 1 ? B.pipeB : row === 2 ? B.pipeY : B.edge).push(g);
+            }
+        });
+        // 東南角：備品貨櫃一對（直放）
+        cContainer(28, 26, Math.PI / 2);
+        cContainer(31.6, 26, Math.PI / 2);
+        // 西南：第二冷卻機組
+        chillerSkid(-28, 28, -.05);
+        // 太陽能場旁：氣象觀測桅杆（北緣，讓開場區）
+        B.mid.push(new THREE.CylinderGeometry(.05, .1, 9, 8).translate(-34.8, 4.5, -35.3));
+        B.mid.push(boxAt(1.7, .06, .06, -34.8, 8.6, -35.3));
+        B.edge.push(boxAt(.22, .22, .22, -34.8, 9.05, -35.3));
+        /* 東北角：消防水塔＋泵組＋teal 管路（讓開太陽能與貨櫃排） */
+        B.base.push(new THREE.CylinderGeometry(1.5, 1.5, 3, 18).translate(34, 1.5, -33));
+        B.mid.push(new THREE.CylinderGeometry(1.56, 1.56, .12, 18).translate(34, 3.06, -33));
+        B.mid.push(new THREE.CylinderGeometry(.5, .5, .3, 12).translate(34, 3.25, -33));
+        B.soft.push(boxAt(1.3, .8, 1, 32, .4, -34.8));
+        pipeRun([[33, -33], [32, -33], [32, -34.2]], { n: 1, y: .3 });
+        /* 東側：備用變壓器彎位 */
+        cTrafo(33, 14, 0, .85);
+        B.gravel.push(boxAt(6.4, .04, 8.5, 33, .03, 14));
+        /* 南側：木箱堆置場＋電纜捲盤 */
+        [[13, 30, 1.2, .9, 1.2, 0], [14.6, 30.2, 1, .7, 1, .3], [13.6, 31.6, 1.4, .6, 1, -.2],
+         [17.2, 30, 1.1, 1.1, 1.1, .15], [18.6, 30.9, .9, .6, .9, 0], [16, 31.8, 1.2, .5, .9, .4]]
+            .forEach(([x, z, w, h, d, ry]) => {
+                const g = new RoundedBoxGeometry(w, h, d, 2, .04);
+                g.rotateY(ry); g.translate(x, h / 2, z);
+                (rng() < .5 ? B.soft : B.mid).push(g);
+            });
+        [[-31.5, 33], [-29.2, 33.4], [22.5, 31.2]].forEach(([x, z]) => {
+            [-.5, .5].forEach(o => B.mid.push(new THREE.CylinderGeometry(.85, .85, .12, 14)
+                .rotateZ(Math.PI / 2).translate(x + o, .85, z)));
+            B.edge.push(new THREE.CylinderGeometry(.3, .3, .95, 10)
+                .rotateZ(Math.PI / 2).translate(x, .85, z));
+        });
+
+        /* 路燈 */
+        [[-16, 5.5, 0], [2, 5.5, Math.PI], [-20, -25, 0], [24, 12, Math.PI / 2], [-8, 26, -Math.PI / 2]]
+            .forEach(([x, z, r]) => lightPole(x, z, r));
+
+        /* 平台外物件獨立收桶，底座切換時可整組升降貼地。 */
+        const outdoorStarts = Object.fromEntries(Object.keys(B).map(k => [k, B[k].length]));
+        const tipsA = pylon(52, -6, 26, -1.19);
+        const tipsB = pylon(52, 24, 26, -1.19);
+        for (let k = 0; k < 4; k++)
+            B.edge.push(new THREE.TubeGeometry(catenary(tipsA[k], tipsB[k], .05), 16, .04, 4, false));
+        turbine(-8, -54, 21, 7.5, .5, -1.19);
+        turbine(12, -54, 21, 7.5, .5, -1.19);
+        turbine(32, -54, 21, 7.5, .5, -1.19);
+        const OUTDOOR_GEOMETRIES = Object.fromEntries(
+            Object.keys(B).map(k => [k, B[k].splice(outdoorStarts[k])])
+        );
+
+        /* ══ 合併出模 ═══════════════════════════════════════ */
+        const MATS = {};   // 材質註冊表：調整面板即時改色用
+        const SKETCH_SRC = [];   // 供 sketch 層取輪廓的幾何
+        const SKETCH_SKIP = ['leaf', 'leaf2', 'trunk'];
+        /* 材質要先於幾何建立：植栽（leaf/leaf2/trunk）的幾何全部落在
+           OUTDOOR_GEOMETRIES（被 splice 走了），主迴圈的 B[k] 是空的、
+           會 continue，MATS[k] 就永遠不存在 —— 後面戶外迴圈拿到 undefined，
+           three 會靜默套用預設的 MeshBasicMaterial（無光照、吃不到 CLAY 也吃不到貼圖）。
+           改成先把每個桶的材質都建好，再各自出模。 */
+        for (const k in B) {
+            MATS[k] = clipNormal(new THREE.MeshStandardMaterial({
+                color: CLAY[k], roughness: .95, metalness: 0,
+                ...(MAT_OPT[k] || {}),
+            }));
+        }
+        for (const k in B) {
+            const merged = mergeCompat(B[k]);
+            if (!merged) continue;
+            const mat = MATS[k];
+            const mesh = new THREE.Mesh(merged, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            if (!SKETCH_SKIP.includes(k)) SKETCH_SRC.push(merged);
+        }
+        /* sketch 層：框外用白底遮擋＋灰輪廓線，做出手繪線稿感 */
+        {
+            const solid = mergeCompat(SKETCH_SRC.map(g => g.clone()));
+            if (solid) {
+                const fill = new THREE.Mesh(solid, SKETCH_FILL);
+                fill.renderOrder = 1;
+                scene.add(fill);
+                const lines = new THREE.LineSegments(new THREE.EdgesGeometry(solid, EDGE_DEG), SKETCH_LINE);
+                lines.renderOrder = 2;
+                scene.add(lines);
+            }
+            SKETCH_SRC.length = 0;
+        }
+        /* 平台外的鐵塔、風機與電纜維持獨立群組，才能隨地面高度同步移動。 */
+        const outdoorSketch = [];
+        for (const k in OUTDOOR_GEOMETRIES) {
+            const merged = mergeCompat(OUTDOOR_GEOMETRIES[k]);
+            if (!merged) continue;
+            const mesh = new THREE.Mesh(merged, MATS[k]);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            OUTDOOR_ROOT.add(mesh);
+            if (!SKETCH_SKIP.includes(k)) outdoorSketch.push(merged);
+        }
+        {
+            const solid = mergeCompat(outdoorSketch.map(g => g.clone()));
+            if (solid) {
+                const fill = new THREE.Mesh(solid, SKETCH_FILL);
+                fill.renderOrder = 1;
+                OUTDOOR_ROOT.add(fill);
+                const lines = new THREE.LineSegments(new THREE.EdgesGeometry(solid, EDGE_DEG), SKETCH_LINE);
+                lines.renderOrder = 2;
+                OUTDOOR_ROOT.add(lines);
+            }
+        }
+        const PLATFORM_OBJECTS = [];
+        const platformMerged = [];
+        for (const k in PLATFORM_GEOMETRIES) {
+            const merged = mergeCompat(PLATFORM_GEOMETRIES[k]);
+            if (!merged) continue;
+            const mesh = new THREE.Mesh(merged, MATS[k]);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+            PLATFORM_OBJECTS.push(mesh);
+            platformMerged.push(merged);
+        }
+        {
+            const solid = mergeCompat(platformMerged.map(g => g.clone()));
+            if (solid) {
+                const fill = new THREE.Mesh(solid, SKETCH_FILL);
+                fill.renderOrder = 1;
+                scene.add(fill);
+                const lines = new THREE.LineSegments(new THREE.EdgesGeometry(solid, EDGE_DEG), SKETCH_LINE);
+                lines.renderOrder = 2;
+                scene.add(lines);
+                PLATFORM_OBJECTS.push(fill, lines);
+            }
+        }
+        const DISPLAY = { base: false };
+        const setBaseVisible = visible => {
+            PLATFORM_OBJECTS.forEach(o => { o.visible = visible; });
+            ground.position.y = visible ? -1.19 : -.02;
+            OUTDOOR_ROOT.position.y = visible ? 0 : 1.17;
+        };
+        setBaseVisible(DISPLAY.base);
+
+        // 圍籬網面（鏈網貼圖、半透明）
+        const fenceGeo = mergeCompat(FENCE_PANELS);
+        if (fenceGeo) {
+            const fenceMesh = new THREE.Mesh(fenceGeo, new THREE.MeshStandardMaterial({
+                color: 0xffffff, transparent: true, opacity: .9,
+                map: TEX.fence, alphaMap: TEX.fence, alphaTest: .12,
+                side: THREE.DoubleSide, roughness: 1, metalness: 0,
+            }));
+            fenceMesh.castShadow = false;
+            scene.add(fenceMesh);
+            MATS.fence = clipNormal(fenceMesh.material);
+        }
+        // 設施字樣板＋黃色閃電貼紙（只在焦點框內出現）
+        LABEL_MESHES.forEach(m => { clipNormal(m.material); scene.add(m); });
+        // 貨櫃屋頂貼圖面
+        {
+            /* 屋頂使用專用 TEX.roof（轉 90°，肋條沿貨櫃長向重複）。
+               圖集啟用時 TEX.roof 已經是切片、旋轉與 center 都由 atlasSlice
+               算好；這裡就不能再 clone 後自己設 rotation（會疊加成 180°），
+               直接用即可。未啟用圖集時才走原本的 clone＋旋轉。 */
+            /* 圖集模式下 TEX.roof 已經是「烘的時候就轉好」的切片，直接用。
+               沒開圖集（?atlas=0）才需要自己轉 —— 那時貼圖是完整一張、
+               center(.5,.5) 就是圖心，rotation 才算得對。 */
+            const roofTex = ATLAS_ON ? TEX.roof : (() => {
+                const t = TEX.roof.clone();
+                t.needsUpdate = true;
+                t.center.set(.5, .5);
+                t.rotation = Math.PI / 2;
+                return t;
+            })();
+            const roofMat = clipNormal(new THREE.MeshStandardMaterial({ map: roofTex, roughness: .85, color: 0xffffff }));
+            MATS.roof = roofMat;
+            ROOF_TILES.forEach(t => {
+                const m = new THREE.Mesh(new THREE.PlaneGeometry(t.w, t.d).rotateX(-Math.PI / 2), roofMat);
+                m.position.set(t.x, t.y, t.z);
+                m.rotation.y = t.ry || 0;
+                m.receiveShadow = true;
+                scene.add(m);
+            });
+        }
+
+        /* ══ 相機與場站切換 ═════════════════════════════════ */
+        const DIR = V(1, .92, 1).normalize();
+        const R = 260;
+        const ZONES = [
+            { name: null, label: '全景總覽', t: V(0, 1, 0), zoom: 1.25 },   /* 1 → 1.25：巡覽尾段的全景放大 25%（使用者要求）。
+                                                                     OrthographicCamera 的 zoom 是等比放大，場站在畫面上就大一圈。
+                                                                     首段（開場飛進儲能）也用同一個 zone，起手會稍近一點。 */
+            /* 聚焦範圍：只有框內維持正常著色，框外淡成線稿。
+               box:[x0,x1,z0,z1] 是「緊貼該設備的矩形」（世界座標，公尺）——
+               取代原本的 fr 半徑正方形。半徑框一定是正方形又以注視點為中心，
+               設備是長條形時就會多框到隔壁（例如儲能陣列的框會咬到變電站）。
+               矩形可以 X/Z 各自給界線，貼著設備切，不會開到別的地方。
+               fr 保留當後備：沒給 box 的站仍走舊行為。
+
+               az/po＝該站的視角關鍵幀（度）。原本整段巡覽只有 t 與 zoom
+               在動、方向恆為 CAM_DIR，捲起來像在平移一張等距圖，沒有運鏡。
+               現在方向跟著 t／zoom 一起插值，鏡頭會邊飛邊轉。
+                 ・az＝方位角，繞著場站轉；這裡排成單向緩慢掃過去，
+                   來回擺盪會暈
+                 ・po＝與 +Y 的夾角，越大＝鏡頭越低越接近平視。
+                   平的主體（太陽能陣列）給小 po 俯視看排列，
+                   高的主體（風機、鐵塔）給大 po 壓低讓它頂到天空
+               不給 az/po 的站（全景）沿用外層 ?az/?po 的構圖，
+               所以全景進出的畫面與改動前完全一致。
+               OrbitControls 的 polar 夾角在有 ?az/?po 時放寬到 .12~1.5 rad
+               （6.9°~85.9°），po 必須留在這個範圍內否則會被 update() 夾掉。 */
+            { name: '太陽能場', label: '太陽能場', t: V(-26, 0, -27), zoom: 2.1, anchor: V(-26, 4.8, -27), box: [-38, -13, -38, -16], az: 12, po: 56 },
+            { name: '儲能陣列', label: '儲能陣列', t: V(-5, 0, -7), zoom: 2, anchor: V(-5, 4.8, -7), box: [-23, 10, -22, 8], az: 30, po: 63 },
+            { name: '變電與管理', label: '變電站', t: V(24, 0, -4), zoom: 2, anchor: V(24, 10.2, -8), box: [13, 35, -17, 8], az: 58, po: 64 },
+            { name: '控制中心', label: '控制中心', t: V(9, 0, 16), zoom: 2.3, anchor: V(6, 5.8, 20), box: [-1, 19, 8, 25], az: 76, po: 69 },
+            { name: '風力發電', label: '風力發電', t: V(12, 9, -54), zoom: 1.5, anchor: V(12, 16, -54), box: [-16, 40, -70, -40], az: 44, po: 73 },
+            { name: '輸電鐵塔', label: '輸電鐵塔', t: V(52, 8, 9), zoom: 1.45, anchor: V(52, 20, -6), box: [38, 66, -22, 26], az: 32, po: 64 },
+        ];
+        let zoneIdx = 0;
+
+        const controls = new OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+        controls.dampingFactor = .07;
+        controls.enablePan = false;
+        controls.minZoom = .62;
+        controls.maxZoom = 4.5;
+        controls.minPolarAngle = .5;
+        controls.maxPolarAngle = 1.32;
+        controls.autoRotate = true;              // 閒置慢速環繞，第一次拖曳即停
+        controls.autoRotateSpeed = -.42;
+        canvas.addEventListener('pointerdown', () => { controls.autoRotate = false; }, { once: true });
+
+        function poseFor(z) {
+            // 保持目前視角方向飛行：自訂角度或拖曳後，切區域不會被重設回預設等距角
+            const d = camera.position.clone().sub(controls.target);
+            const dir = d.lengthSq() > 1 ? d.normalize() : DIR;
+            return { target: z.t.clone(), pos: z.t.clone().addScaledVector(dir, R), zoom: z.zoom };
+        }
+        {
+            const p = poseFor(ZONES[0]);
+            camera.position.copy(p.pos);
+            controls.target.copy(p.target);
+            camera.zoom = p.zoom;
+            camera.updateProjectionMatrix();
+        }
+        /* URL 視角參數：?az=方位角&po=俯仰角（度）&fov=視野&spin=0 */
+        if (Q.has('az') || Q.has('po')) {
+            controls.minPolarAngle = .12;    // 放寬夾角，任意 URL 角度都吃得下
+            controls.maxPolarAngle = 1.5;
+            const az = THREE.MathUtils.degToRad(parseFloat(Q.get('az')) || 45);
+            const po = THREE.MathUtils.degToRad(parseFloat(Q.get('po')) || 57);
+            camera.position.copy(controls.target)
+                .add(new THREE.Vector3().setFromSpherical(new THREE.Spherical(R, po, az)));
+            camera.lookAt(controls.target);
+        }
+        if (Q.has('fov')) { viewH = parseFloat(Q.get('fov')) || viewH; setFrustum(); }
+        /* spin：0＝不轉；其他數字＝卷軸特寫模式下的自轉速度（度/秒）。
+           scrub 每幀會重算相機位置，OrbitControls 的 autoRotate 會被蓋掉，
+           所以自轉改成讓視角方向 CAM_DIR 繞 Y 軸累加角度 */
+        const SPIN_DPS = Q.has('spin') ? (parseFloat(Q.get('spin')) || 0) : 0;
+        if (Q.get('spin') === '0') controls.autoRotate = false;
+        /* ?lock=1 鎖定視角：不能旋轉/縮放/平移，滾輪轉發給外層頁面捲動 */
+        const LOCKED = Q.get('lock') === '1';
+        if (LOCKED) {
+            controls.enableRotate = controls.enableZoom = controls.enablePan = false;
+            controls.autoRotate = false;
+            addEventListener('wheel', e => {
+                if (parent !== window) parent.postMessage({ type: 'ob:wheel', dy: e.deltaY }, '*');
+            }, { passive: true });
+        }
+        /* 視角方向（scrub 捲動特寫沿用）；SPIN_DPS > 0 時繞 Y 軸緩慢自轉 */
+        const CAM_DIR = camera.position.clone().sub(controls.target).normalize();
+        const SPIN = { a: 0, dir: new THREE.Vector3(), axis: new THREE.Vector3(0, 1, 0) };
+        const camDirNow = () => SPIN_DPS
+            ? SPIN.dir.copy(CAM_DIR).applyAxisAngle(SPIN.axis, SPIN.a)
+            : CAM_DIR;
+
+        /* ══ 巡覽視角插值 ═══════════════════════════════════════
+           在 (az, po) 球座標裡插值，不是直接 lerp 方向向量：
+           角度有界、看得懂也調得動，而且兩個方向向量做 nlerp 會沿著弦
+           而不是弧走，角度一大就會出現「先縮短再拉開」的怪加速。
+           BASE_SPH 是外層 ?az/?po（或預設等距）鎖存下來的基準構圖，
+           沒給 az/po 的站直接沿用它。 */
+        const BASE_SPH = new THREE.Spherical().setFromVector3(CAM_DIR);
+        const zoneAz = z => z.az == null ? BASE_SPH.theta : THREE.MathUtils.degToRad(z.az);
+        const zonePo = z => z.po == null ? BASE_SPH.phi : THREE.MathUtils.degToRad(z.po);
+        /* 方位角一律走最短弧：直接 lerp 的話從 170° 轉到 -170° 會繞 340°
+           整整一圈回頭，而不是跨過 180° 的那 20° */
+        const arcDelta = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
+        const SCRUB_DIR = {
+            az: BASE_SPH.theta, po: BASE_SPH.phi,
+            v: new THREE.Vector3(), s: new THREE.Spherical(1, 0, 0),
+        };
+        /* 進 scrub 模式的當下把平滑值對齊現況，否則第一幀會從基準角度
+           硬跳到當時的相機角度 */
+        const syncScrubDir = () => {
+            const d = camera.position.clone().sub(controls.target);
+            if (d.lengthSq() < 1) return;
+            const sp = new THREE.Spherical().setFromVector3(d.normalize());
+            SCRUB_DIR.az = sp.theta; SCRUB_DIR.po = sp.phi;
+        };
+
+        // 鏡頭補間（無外部動畫庫）：smootherstep 緩入緩出
+        let camTween = null;
+        const smootherstep = t => t * t * t * (t * (t * 6 - 15) + 10);
+        function flyTo(zone) {
+            const p = poseFor(zone);
+            camTween = {
+                t: 0,
+                fromP: camera.position.clone(), toP: p.pos,
+                fromT: controls.target.clone(), toT: p.target,
+                fromZ: camera.zoom, toZ: p.zoom,
+            };
+            controls.enabled = false;
+        }
+
+        const tagEl = document.getElementById('zoneTag');
+        const tagText = document.getElementById('zoneTagText');
+        const ZONE_SPOT = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 };   // 區域 → 對應熱點（滾動巡覽時錨點轉橘）
+        function setZone(i) {
+            zoneIdx = (i + ZONES.length) % ZONES.length;
+            const z = ZONES[zoneIdx];
+            flyTo(z);
+            tagText.textContent = z.name || '';
+            tagEl.classList.toggle('on', !!z.name);
+            document.getElementById('zonePrevLabel').textContent = ZONES[(zoneIdx - 1 + ZONES.length) % ZONES.length].label;
+            document.getElementById('zoneNextLabel').textContent = ZONES[(zoneIdx + 1) % ZONES.length].label;
+            document.querySelectorAll('.spot.is-zone').forEach(o => o.classList.remove('is-zone'));
+            const si = ZONE_SPOT[zoneIdx];
+            if (si != null && SPOTS[si] && SPOTS[si].el) SPOTS[si].el.classList.add('is-zone');
+        }
+        document.getElementById('zonePrev').addEventListener('click', () => setZone(zoneIdx - 1));
+        document.getElementById('zoneNext').addEventListener('click', () => setZone(zoneIdx + 1));
+
+        /* ══ 藍色六角熱點 ═══════════════════════════════════ */
+        /* 只保留巡覽有使用的六個錨點（依巡覽順序） */
+        const SPOTS = [
+            { p: V(-26, 4.8, -27), title: '太陽能發電陣列', kicker: 'Solar PV Array', body: '固定式支架陣列面朝正南，深藍色模組串接後匯入匯流箱，與儲能系統併網運轉，白天發電、離峰儲存。' },
+            { p: V(-5, 4.4, -7), title: '電池貨櫃陣列', kicker: 'Battery Container', body: '20 呎 ISO 規格電池貨櫃 15 座成列，內含電池模組堆疊與熱管理系統，橘色幹管把每櫃串上直流母線。' },
+            { p: V(24, 10, -8), title: '變電站', kicker: 'Substation', body: '門型架引接線經礙子串落至兩座主變壓器，中間防火牆隔離，將場站電力升壓送出。' },
+            { p: V(6, 5, 20), title: '控制室', kicker: 'Control Room', body: '值班人員在此監控全站：SCADA 畫面、保護電驛與消防系統的第一線。' },
+            { p: V(12, 16, -54), title: '風力發電機', kicker: 'Wind Turbine', body: '陸域風機與太陽能互補發電——風光加儲的組合，讓再生能源輸出更平滑可調度。' },
+            { p: V(52, 20, -6), title: '輸電鐵塔', kicker: 'Transmission Tower', body: '格構式輸電鐵塔將場站電力送往電網，上下兩層橫擔共四回線路。' },
+        ];
+        const spotsHost = document.getElementById('spots');
+        const card = document.getElementById('card');
+        let activeSpot = null;
+        SPOTS.forEach((s, i) => {
+            const el = document.createElement('div');
+            el.className = 'spot';
+            /* 錨點標記從 + 換成閃電（使用者要求：改成電流）。
+               用 SVG 不用文字符號：⚡ 這類 emoji 在不同系統會被替換成
+               彩色字型，顏色就不受 CSS 控制 —— 而巡覽模式正是靠
+               .spot 的 color 在 transparent 與 #fff 之間過渡來淡出淡入的。
+               fill=currentColor 讓那組規則原封不動繼續生效。
+               路徑沿用主站 index00 舊商標圖示的同一條，站內閃電造型一致。 */
+            el.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>';
+            el.style.setProperty('--pd', (i * .32) + 's');   // 脈衝錯拍
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.spot').forEach(o => o.classList.remove('is-active'));
+                el.classList.add('is-active');
+                activeSpot = s;
+                document.getElementById('cardTitle').textContent = s.title;
+                document.getElementById('cardKicker').textContent = s.kicker;
+                document.getElementById('cardBody').textContent = s.body;
+                card.classList.add('on');
+            });
+            spotsHost.appendChild(el);
+            s.el = el;
+        });
+        document.getElementById('cardClose').addEventListener('click', () => {
+            card.classList.remove('on');
+            document.querySelectorAll('.spot').forEach(o => o.classList.remove('is-active'));
+            activeSpot = null;
+        });
+
+        const tmpV = new THREE.Vector3();
+        function project(p) {
+            tmpV.copy(p).project(camera);
+            return {
+                x: (tmpV.x * .5 + .5) * innerWidth,
+                y: (-tmpV.y * .5 + .5) * innerHeight,
+                front: tmpV.z < 1,
+            };
+        }
+        function updateOverlays() {
+            SPOTS.forEach(s => {
+                const q = project(s.p);
+                s.el.style.transform = `translate(${q.x}px, ${q.y}px)`;
+                s.el.style.display = q.front ? 'grid' : 'none';
+            });
+            const z = ZONES[zoneIdx];
+            if (z.name && z.anchor) {
+                const q = project(z.anchor);
+                tagEl.style.left = q.x + 'px';
+                tagEl.style.top = (q.y - 8) + 'px';
+            }
+        }
+
+        /* ══ 主迴圈 ═════════════════════════════════════════ */
+        let lastW = 0, lastH = 0;
+        function fitIfNeeded() {
+            const w = innerWidth, h = innerHeight;
+            if (w && h && (lastW !== w || lastH !== h)) {
+                lastW = w; lastH = h;
+                setFrustum();
+                renderer.setSize(w, h);
+                composer.setSize(w, h);
+            }
+        }
+        addEventListener('resize', fitIfNeeded);
+
+        const clock = new THREE.Clock();
+        // 卷軸刷特寫狀態（applyScrub 定義在後）；prevT/prevZ/still 用於「鏡頭停穩」判定
+        const SCRUB = { p: null, zone: -1, prevT: new THREE.Vector3(), prevZ: 1, still: 0 };
+        const ANIM = { wind: 1 };   // 風機轉速倍率（調整面板）
+        let windT = 0;
+        function tick() {
+            rafId = requestAnimationFrame(tick);
+            fitIfNeeded();
+            const dt = Math.min(clock.getDelta(), .05);
+            updateFocusPlanes(dt);
+            windT += dt * ANIM.wind;
+            ROTORS.forEach(r => { r.m.rotation.z = r.ph + windT * r.sp; });   // 風機慢轉
+            if (camTween) {
+                camTween.t += dt / 1.05;
+                const e = smootherstep(Math.min(camTween.t, 1));
+                camera.position.lerpVectors(camTween.fromP, camTween.toP, e);
+                controls.target.lerpVectors(camTween.fromT, camTween.toT, e);
+                camera.zoom = camTween.fromZ + (camTween.toZ - camTween.fromZ) * e;
+                camera.updateProjectionMatrix();
+                camera.lookAt(controls.target);
+                if (camTween.t >= 1) { camTween = null; controls.enabled = true; }
+            } else {
+                if (SCRUB.p != null) applyScrub(dt);        // 卷軸刷特寫（固定角度）
+                controls.update();
+                if (window.__camSync) window.__camSync();   // 面板角度滑桿同步顯示
+            }
+            updateOverlays();
+            composer.render();
+        }
+
+        /* 渲染迴圈可暫停：內嵌時母頁會依 iframe 可見性送 ob:active。
+           同源 iframe 的 rAF 不會被瀏覽器節流 —— 不自己停的話，
+           GTAO 後製會在完全看不到的位置繼續滿速燒 GPU。
+           hostWants 記母頁要的狀態，分頁隱藏優先蓋過它。 */
+        let rafId = 0, running = false, hostWants = true;
+        function setRunning(on) {
+            if (on === running) return;
+            running = on;
+            window.__obRunning = on;                       // 驗收探針用
+            if (on) {
+                clock.getDelta();
+                composer.render();                         // 復工先暖機一幀：後製管線與 RT 重建的成本在離屏時付掉
+                rafId = requestAnimationFrame(tick);
+            }
+            else cancelAnimationFrame(rafId);
+        }
+        addEventListener('message', e => {
+            const d = e.data;
+            if (!d || d.type !== 'ob:active') return;
+            hostWants = !!d.on;
+            setRunning(hostWants && !document.hidden);
+        });
+        document.addEventListener('visibilitychange', () =>
+            setRunning(hostWants && !document.hidden));
+        setRunning(true);
+
+        SCENE_READY = true; SCENE_REF = scene;   // 之後面板重烘圖集才會走訪替換
+
+        // 除錯／驗收把手（與 3d-eco-city 的 __ecoCity 同一套用法）
+        window.__ob = {
+            THREE, scene, camera, renderer, composer, controls,
+            SKETCH, FOCUS, applySketchAmount, focusTo, wireR,
+            MATS, SKETCH_LINE, SKETCH_FILL, setRunning, ZONES, focusBox, focusTo, FR_ALL,
+            TEX, ATLAS_MAP, ATLAS_SIZE, bakeAtlas, useAtlas, useSeparateTextures, downloadAtlas,
+            get atlasOn() { return ATLAS_ON; },
+        };
+
+        setZone(0);
+
+        /* 開場暖機：首次縮小焦點框時，被裁切的 sketch 材質才會編譯著色器，
+           那一下會卡住整幀。趁載入遮罩還在，先用小框渲染一次把成本付掉。 */
+        (() => {
+            const keep = { cx: FOCUS.cx, cz: FOCUS.cz, r: FOCUS.r, tx: FOCUS.tx, tz: FOCUS.tz, tr: FOCUS.tr };
+            focusTo(0, 0, 20);
+            updateFocusPlanes(1);
+            composer.render();
+            Object.assign(FOCUS, keep);
+            updateFocusPlanes(1);
+            composer.render();
+        })();
+
+        requestAnimationFrame(() => requestAnimationFrame(() =>
+            document.getElementById('loading').classList.add('is-done')));
+
+        /* ══ 卷軸刷特寫（scrub）═══════════════════════════════
+           外層傳入 0-1 進度，沿指定路徑連續插值目標點與縮放；
+           視角方向來自 camDirNow()（可緩慢自轉）。
+           巡覽順序（使用者指定）：全景 → 儲能陣列(2) → 太陽能(1) → 變電站(3)
+           → 風力發電(5) → 輸電鐵塔(6) → 控制中心(4) → 全景。
+           第一段（全景→儲能）不吃捲軸：父頁把「開窗進度」映射到 p∈[0,1/7]
+           每幀傳進來（見父頁的 __obIntro／SEG0）—— 洞張多大鏡頭就飛多近，
+           洞全開的那一幀正好落在場站中心的電池貨櫃特寫，開窗與運鏡疊成同一個動作。
+           數字是 ZONES 的索引；父頁卡片（index00 / index00-earth 的 .zc-item）
+           已照這個順序重排，改這裡要連卡片一起改。 */
+        const SCRUB_PATH = [0, 2, 1, 3, 5, 6, 4, 0];       // 巡覽路徑：首段配合開窗飛進儲能，尾段縮回全景
+        function applyScrub(dt) {
+            const segs = SCRUB_PATH.length - 1;
+            const f = Math.min(Math.max(SCRUB.p, 0), 1) * segs;
+            const i = Math.min(segs - 1, Math.floor(f));
+            const e = smootherstep(f - i);                 // 每段緩入緩出：到站有停留感
+            const za = ZONES[SCRUB_PATH[i]], zb = ZONES[SCRUB_PATH[i + 1]];
+            const tgt = za.t.clone().lerp(zb.t, e);
+            const zm = za.zoom + (zb.zoom - za.zoom) * e;
+            /* 段內的視角關鍵幀：跟 t／zoom 走同一條 e 曲線，
+               到站前的緩出讓鏡頭「轉到定位」與「移到定位」同時完成 */
+            const azA = zoneAz(za), poA = zonePo(za);
+            const tAz = azA + arcDelta(azA, zoneAz(zb)) * e;
+            const tPo = poA + (zonePo(zb) - poA) * e;
+            /* 追隨捲動：外層若有 Lenis，捲動進度本身已平滑，
+               這裡就別再重壓緩動（兩邊都加會變黏），只留一點吸收抖動 */
+            const k = 1 - Math.exp(-dt * 13);
+            controls.target.lerp(tgt, k);
+            camera.zoom += (zm - camera.zoom) * k;
+            /* 轉向與平移共用同一顆 k：快速捲動時一起落後、停下時一起收斂。
+               分開給係數會看到「先轉到位、才慢慢平移過去」的脫節 */
+            SCRUB_DIR.az += arcDelta(SCRUB_DIR.az, tAz) * k;
+            SCRUB_DIR.po += (tPo - SCRUB_DIR.po) * k;
+            if (SPIN_DPS) SPIN.a += dt * SPIN_DPS * Math.PI / 180;
+            /* SPIN 原本是把 CAM_DIR 繞 Y 軸轉，繞 Y 軸就是加在方位角上，
+               所以直接疊進 theta，行為與 camDirNow() 等價 */
+            SCRUB_DIR.s.set(1, SCRUB_DIR.po, SCRUB_DIR.az + SPIN.a);
+            camera.position.copy(controls.target)
+                .addScaledVector(SCRUB_DIR.v.setFromSpherical(SCRUB_DIR.s), R);
+            camera.updateProjectionMatrix();
+            camera.lookAt(controls.target);
+            /* 顯示判定：鏡頭是否已追上捲動位置對應的構圖（與幀率無關）。
+               快速捲動時鏡頭落後 → 隱藏錨點（不飄）；停止捲動鏡頭收斂 → 淡入 */
+            const caughtUp = controls.target.distanceTo(tgt) < 1.2
+                && Math.abs(camera.zoom - zm) < .06
+                /* 角度也要收斂才算到站（.05 rad ≈ 2.9°）——
+                   否則鏡頭還在轉，熱點就已經淡進來跟著飄 */
+                && Math.abs(arcDelta(SCRUB_DIR.az, tAz)) < .05
+                && Math.abs(SCRUB_DIR.po - tPo) < .05;
+            document.body.classList.toggle('at-stop', caughtUp);
+            // 最接近的區域 → 錨點轉橘（全景無錨點）
+            const near = SCRUB_PATH[Math.round(SCRUB.p * segs)];
+            /* 焦點方框：鎖在「最近站」的設備上（與卡片／錨點同一個判定），
+               靠 updateFocusPlanes 的平滑滑過去。
+               若改成跟鏡頭插值位置走，卡片切到下一站時框還在半路，會對不上 */
+            const fz = ZONES[near] || ZONES[0];
+            // 有 box 就用緊貼設備的矩形，沒有才退回半徑正方形
+            if (fz.box) focusBox(...fz.box);
+            else focusTo(fz.t.x, fz.t.z, fz.fr || FR_ALL);
+            if (near !== SCRUB.zone) {
+                SCRUB.zone = near;
+                document.querySelectorAll('.spot.is-zone').forEach(o => o.classList.remove('is-zone'));
+                const si = ZONE_SPOT[near];
+                if (si != null && SPOTS[si] && SPOTS[si].el) SPOTS[si].el.classList.add('is-zone');
+            }
+        }
+
+        /* 外層頁面控制（iframe postMessage）：
+           {type:'ob:zone', index:0-4} 跳段飛行
+           {type:'ob:scrub', p:0-1}    卷軸連續刷特寫 */
+        addEventListener('message', e => {
+            const d = e.data;
+            if (!d) return;
+            if (d.type === 'ob:zone' && !isNaN(+d.index)) setZone(+d.index);
+            else if (d.type === 'ob:scrub' && typeof d.p === 'number') {
+                if (SCRUB.p == null) syncScrubDir();   // 首次進入才對齊，之後由插值接管
+                SCRUB.p = d.p;
+                camTween = null;            // 取消跳段飛行，交給 scrub
+                controls.enabled = !LOCKED;
+                document.body.classList.add('scrub-mode');
+            }
+        });
+
+        /* ══ 調整面板（lil-gui）══════════════════════════════
+           一般開啟即顯示；?embed=1 嵌入模式隱藏，加 &gui=1 可強制打開 */
+        if (!EMBED || Q.has('gui')) {
+            const gui = new GUI({ title: '場景參數' });
+            gui.add(DISPLAY, 'base').name('底座')
+                .onChange(setBaseVisible);
+
+            /* 線稿：0＝全實體、1＝整場線條。中間值是「焦點框」——
+               框內保持實體、框外變線稿，可以做出只有主角上色的效果 */
+            /* UV 圖集：8 張分頁貼圖併成單張 2048²，材質改吃圖集的區塊。
+               「匯出」存成 textures/tex-atlas.png 覆蓋後重新整理，就會改讀那張。 */
+            const gT = gui.addFolder('UV 圖集 / Atlas');
+            gT.add({ f: () => downloadAtlas() }, 'f').name('⤓ 匯出 tex-atlas.png');
+            gT.add({ f: () => useAtlas(new THREE.CanvasTexture(bakeAtlas())) }, 'f').name('↻ 重烘圖集');
+            gT.add({ f: () => useSeparateTextures() }, 'f').name('◧ 切回獨立貼圖（對照用）');
+            gT.close();
+
+            const gS = gui.addFolder('線稿 / Wireframe');
+            const refreshGui = () => gui.controllersRecursive().forEach(c => c.updateDisplay());
+            gS.add(SKETCH, 'amount', 0, 1, .01).name('線稿強度').onChange(applySketchAmount).listen();
+            gS.add({ f: () => { SKETCH.amount = 1; applySketchAmount(); refreshGui(); } }, 'f').name('◱ 全部變線條');
+            gS.add({ f: () => { SKETCH.amount = 0; applySketchAmount(); refreshGui(); } }, 'f').name('◼ 全部回實體');
+            const SK = { 線色: '#' + SKETCH_LINE.color.getHexString(), 線條濃度: SKETCH_LINE.opacity, 底色: '#' + SKETCH_FILL.color.getHexString() };
+            gS.addColor(SK, '線色').onChange(v => SKETCH_LINE.color.set(v));
+            gS.add(SK, '線條濃度', 0, 1, .01).onChange(v => { SKETCH_LINE.opacity = v; });
+            gS.addColor(SK, '底色').onChange(v => SKETCH_FILL.color.set(v));
+
+            const hex = c => '#' + c.getHexString();
+
+            const gC = gui.addFolder('配色');
+            const COLOR_ITEMS = [
+                ['base', '主體白'], ['soft', '混凝土'], ['mid', '金屬件'], ['deep', '百葉深灰'],
+                ['edge', '點綴橘'], ['pipeB', '飾條青'], ['pipeY', '管線黃'], ['pipeW', '管線白'],
+                ['pv', '太陽能板'], ['gravel', '碎石'], ['fence', '圍籬網'], ['roof', '貨櫃屋頂'],
+            ];
+            const PC = {};
+            COLOR_ITEMS.forEach(([k, label]) => {
+                if (!MATS[k]) return;
+                PC[k] = hex(MATS[k].color);
+                gC.addColor(PC, k).name(label).onChange(v => MATS[k].color.set(v));
+            });
+            PC.ground = hex(ground.material.color);
+            gC.addColor(PC, 'ground').name('地面').onChange(v => ground.material.color.set(v));
+            PC.bg = hex(scene.background);
+            gC.addColor(PC, 'bg').name('背景').onChange(v => { scene.background.set(v); scene.fog.color.set(v); });
+
+            const gV = gui.addFolder('角度（等距視角）');
+            const CAMP = {
+                方位角: THREE.MathUtils.radToDeg(controls.getAzimuthalAngle()),
+                俯仰角: THREE.MathUtils.radToDeg(controls.getPolarAngle()),
+            };
+            const applyAngles = () => {
+                controls.autoRotate = false;
+                controls.minPolarAngle = .12;     // 放寬預設夾角，滑桿全程有效
+                controls.maxPolarAngle = 1.5;
+                const r = camera.position.distanceTo(controls.target) || R;
+                const sph = new THREE.Spherical(r,
+                    THREE.MathUtils.degToRad(CAMP.俯仰角),
+                    THREE.MathUtils.degToRad(CAMP.方位角));
+                camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(sph));
+                camera.lookAt(controls.target);
+            };
+            gV.add(CAMP, '方位角', -180, 180, .5).onChange(applyAngles).listen();
+            gV.add(CAMP, '俯仰角', 8, 86, .5).onChange(applyAngles).listen();
+            const VP = { 視野: viewH };
+            gV.add(VP, '視野', 25, 90, 1).name('視野範圍').onChange(v => { viewH = v; setFrustum(); });
+            // 拖曳/自動環繞時同步滑桿顯示
+            window.__camSync = () => {
+                CAMP.方位角 = THREE.MathUtils.radToDeg(controls.getAzimuthalAngle());
+                CAMP.俯仰角 = THREE.MathUtils.radToDeg(controls.getPolarAngle());
+            };
+
+            const gL = gui.addFolder('光影');
+            gL.add(sun, 'intensity', 0, 3, .01).name('太陽強度');
+            gL.add(hemi, 'intensity', 0, 2, .01).name('天光強度');
+            gL.add(fill, 'intensity', 0, 1, .01).name('補光強度');
+            gL.add(scene, 'environmentIntensity', 0, 1, .01).name('環境反射');
+            /* 陰影貼圖是靜態的，動到光就得手動重畫一次 */
+            gL.add(sun, 'castShadow').name('陰影').onChange(redrawShadow);
+            gL.add(sun.position, 'x', -150, 150, 1).name('太陽 X').onChange(redrawShadow);
+            gL.add(sun.position, 'y', 40, 240, 1).name('太陽高度').onChange(redrawShadow);
+            gL.add(sun.position, 'z', -150, 150, 1).name('太陽 Z').onChange(redrawShadow);
+            gL.add(sun.shadow, 'normalBias', 0, 2, .01).name('陰影修正').onChange(redrawShadow);
+
+            const gA = gui.addFolder('AO 接觸陰影');
+            gA.add(gtao, 'enabled').name('啟用');
+            gA.add(gtao, 'blendIntensity', 0, 1, .01).name('混合強度');
+            const AOP = { radius: 1.1, thickness: 1, scale: 1.3 };
+            const aoUpd = () => gtao.updateGtaoMaterial({ ...AOP, distanceExponent: 1.4, samples: 16 });
+            gA.add(AOP, 'radius', .1, 4, .05).name('半徑').onChange(aoUpd);
+            gA.add(AOP, 'thickness', .2, 4, .05).name('厚度').onChange(aoUpd);
+            gA.add(AOP, 'scale', .2, 3, .05).name('對比').onChange(aoUpd);
+            gA.close();
+
+            const gF = gui.addFolder('霧（遠景淡出）');
+            gF.add(scene.fog, 'near', 100, 700, 5).name('起點');
+            gF.add(scene.fog, 'far', 200, 1200, 5).name('終點');
+            gF.close();
+
+            const gM = gui.addFolder('相機與動態');
+            gM.add(camera, 'zoom', .5, 4.5, .01).name('縮放')
+                .onChange(() => camera.updateProjectionMatrix()).listen();
+            gM.add(controls, 'autoRotate').name('自動環繞').listen();
+            gM.add(controls, 'autoRotateSpeed', -2, 2, .02).name('環繞速度');
+            gM.add(ANIM, 'wind', 0, 4, .05).name('風機轉速');
+            gM.close();
+
+            const XP = {
+                複製設定: () => navigator.clipboard.writeText(JSON.stringify(gui.save(), null, 2)),
+            };
+            gui.add(XP, '複製設定');
+            window.__gui = gui;
+        }
+
+        window.__ourBusiness = { scene, camera, renderer, controls, ZONES, setZone, composer, TEX, THREE, MATS, sun, hemi, fill, gtao, ground, ANIM, FOCUS };   // 開發除錯用
+    </script>
+</body>
+
+</html>

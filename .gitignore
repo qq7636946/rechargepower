@@ -1,0 +1,17 @@
+# Windows / Google Drive
+desktop.ini
+Thumbs.db
+.tmp.drivedownload/
+.tmp.driveupload/
+*.tmp
+
+# 備份檔
+*.bak
+*.bak-*
+*.bak[0-9]*
+*.CURRENT-*
+*.arc-*
+
+# 大型素材（需要時再手動加）
+*.mp4
+*.psd
