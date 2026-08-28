@@ -1,6 +1,6 @@
 # rechargepower
 
-台普威能源（RechargePower）網站 3D 頁面的線上預覽用 repo。
+Our Business 3D 頁面的線上預覽用 repo。
 
 ## 內容
 
